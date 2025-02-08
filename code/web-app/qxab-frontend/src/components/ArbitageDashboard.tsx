@@ -32,6 +32,7 @@ const ArbitrageDashboard: React.FC = () => {
         <button onClick={handleRunFullScript}>Run full script</button>
       </div>
       {showGraph && <LiveDataGraph />}
+
     </div>
   );
 };
