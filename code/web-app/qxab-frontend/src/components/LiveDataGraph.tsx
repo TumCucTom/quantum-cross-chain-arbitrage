@@ -145,10 +145,25 @@ const historicalData: ArbitrageOpportunity[] = [
     const fetchHistoricalData = async () => {
       setLoading(true);
       try {
-        // WHERE THE API ENDPOINT WOULD BE CALLED FOR HISTORICAL DATA!! CURRENTLY DUMMY DATA
-        const response = { data: historicalData } as { data: ArbitrageOpportunity[] }; //API CALL TO CURRENCY DATA
-        setData(response.data);
-        setSliderValue(response.data.length);
+        const response = await fetch(`http://localhost:5002/history/${currency}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: "cors",  // Enable CORS mode
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch historical data: ${response.statusText}`);
+        }
+        const result = await response.json();
+
+        if (result.status === "success") {
+          setData(result.history);
+          setSliderValue(result.history.length);
+        } else {
+          console.error("API Error:", result.message);
+        }
       } catch (error) {
         console.error("Error fetching historical data:", error);
       } finally {
@@ -156,7 +171,9 @@ const historicalData: ArbitrageOpportunity[] = [
       }
     };
 
-  // Fetch live data immediately and then every 3 seconds
+
+
+    // Fetch live data immediately and then every 3 seconds
   useEffect(() => {
     if (isHistorical) {
       fetchHistoricalData();

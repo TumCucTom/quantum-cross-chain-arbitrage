@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS  # Import Flask-CORS
 import mysql.connector
 import pymysql
 import os
@@ -9,6 +10,8 @@ import time
 import logging
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
 
 # -----------------------------
 # 🔹 Configure Logging (Docker Captures Logs)
@@ -86,6 +89,8 @@ def import_csv_to_db():
     conn.commit()
     cur.close()
     logger.info("✅ CSV data successfully imported into MySQL.")
+
+#import_csv_to_db()  # Import CSV data on startup
 
 # -----------------------------
 # 🔹 Flask API Endpoints
@@ -172,12 +177,43 @@ def get_historical_data():
         historical_data = cur.fetchall()
         cur.close()
         logger.info(f"✅ Retrieved {len(historical_data)} historical records.")
-
+        logger.info(jsonify({"status": "success", "historical_data": historical_data}))
         return jsonify({"status": "success", "historical_data": historical_data})
 
     except Exception as e:
         logger.error(f"❌ Error fetching historical data: {str(e)}")
         return jsonify({"status": "error", "message": str(e)})
+
+@app.route("/history/<symbol>")
+def get_full_history(symbol):
+    """
+    Fetches the full historical price data for a given trading pair.
+    Returns all recorded prices and timestamps.
+    """
+    try:
+        logger.info(f"Fetching historical data for {symbol}...")
+        cur = conn.cursor(pymysql.cursors.DictCursor)
+
+        cur.execute("""
+            SELECT symbol, price, uniswap_liquidity, curve_liquidity, timestamp
+            FROM market_data
+            WHERE symbol = %s
+            ORDER BY timestamp ASC
+        """, (symbol,))
+
+        history_data = cur.fetchall()
+        cur.close()
+
+        if not history_data:
+            return jsonify({"status": "error", "message": f"No historical data found for {symbol}"}), 404
+
+        logger.info(f"✅ Retrieved {len(history_data)} historical records for {symbol}.")
+        return jsonify({"status": "success", "symbol": symbol, "history": history_data})
+
+    except Exception as e:
+        logger.error(f"❌ Error fetching history for {symbol}: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

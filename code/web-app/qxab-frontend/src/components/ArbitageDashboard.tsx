@@ -36,8 +36,8 @@ const ArbitrageDashboard: React.FC = () => {
   };
 
   const handleSubmitDialog = () => {
-    if (!/^[A-Za-z]{3,5}$/.test(inputValue)) {
-      setError('Text must be 3 to 5 alphabetic characters.');
+    if (!/^[A-Za-z]{3,8}$/.test(inputValue)) {
+      setError('Text must be 3 to 8 alphabetic characters.');
       return;
     }
     if (selectedIndex === null) return;

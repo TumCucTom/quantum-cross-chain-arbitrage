@@ -8,3 +8,4 @@ aiohttp
 pymysql
 flask
 mysql-connector-python
+flask-cors
