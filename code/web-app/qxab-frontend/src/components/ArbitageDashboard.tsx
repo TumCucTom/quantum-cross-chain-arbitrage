@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import LiveDataGraph from './LiveDataGraph';
 import Grid from '@mui/material/Grid';
-import { IconButton, Paper } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
-import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
+import { IconButton, Paper, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 
 interface CellState {
   text: string;
@@ -23,6 +20,8 @@ const ArbitrageDashboard: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [fullScreenOpen, setFullScreenOpen] = useState<boolean>(false);
+  const [fullScreenCurrency, setFullScreenCurrency] = useState<string>('');
 
   const handleOpenDialog = (index: number) => {
     setSelectedIndex(index);
@@ -65,6 +64,16 @@ const ArbitrageDashboard: React.FC = () => {
     }
   };
 
+  const handleOpenFullScreen = (currency: string) => {
+    setFullScreenCurrency(currency);
+    setFullScreenOpen(true);
+  };
+
+  const handleCloseFullScreen = () => {
+    setFullScreenOpen(false);
+    setFullScreenCurrency('');
+  };
+
   return (
     <div className="dashboard-container">
       <h2>Arbitrage Opportunities Dashboard</h2>
@@ -82,7 +91,7 @@ const ArbitrageDashboard: React.FC = () => {
               {/* "+" icon to trigger the popup dialog */}
               <IconButton
                 onClick={() => handleOpenDialog(index)}
-                style={{ position: 'absolute', top: 8, right: 8 }}
+                style={{ position: 'absolute', top: 8, left: 8 }}
               >
                 <AddIcon />
               </IconButton>
@@ -91,6 +100,13 @@ const ArbitrageDashboard: React.FC = () => {
                   <p>{cell.text}</p>
                   {/* Pass an indicator if needed */}
                   <LiveDataGraph currency = {cell.text}/>
+
+                  <IconButton
+                    onClick={() => handleOpenFullScreen(cell.text)}
+                    style={{ position: 'absolute', top: 8, right: 8 }}
+                  >
+                    <FullscreenIcon />
+                  </IconButton>
                 </div>
               ) : (
                 <p>Click + to add graph</p>
@@ -122,6 +138,31 @@ const ArbitrageDashboard: React.FC = () => {
           <Button onClick={handleSubmitDialog}>Submit</Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog open={fullScreenOpen} onClose={handleCloseFullScreen} fullScreen>
+        <DialogTitle>
+          Full Screen Graph - {fullScreenCurrency}
+          <IconButton
+            onClick={handleCloseFullScreen}
+            style={{ position: 'absolute', right: 16, top: 16 }}
+          >
+            <FullscreenExitIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+        <LiveDataGraph currency={fullScreenCurrency} />
+        </DialogContent>
+      </Dialog>
+
+      <Box mt={2}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleRunFullScript}
+        >
+          Run full script
+        </Button>
+      </Box>
     </div>
   );
 };
