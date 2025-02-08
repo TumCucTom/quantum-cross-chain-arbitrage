@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  # 🔹 MySQL Database Service
+  mysql:
+    image: mysql:latest
+    container_name: my_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql # Optional
+
+  # 🔹 Backend API Service (FastAPI)
+  backend:
+    build: ./backend
+    container_name: my_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
+  # 🔹 Frontend Web App (React)
+  frontend:
+    build: ./frontend
+    container_name: my_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+    environment:
+      - REACT_APP_API_URL=http://backend:8000
+
+volumes:
+  mysql_data:
