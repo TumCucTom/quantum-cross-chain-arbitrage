@@ -1,97 +1,127 @@
-import React, { useState, useEffect } from 'react';
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-  } from 'recharts';
+import React, { useState } from 'react';
+import LiveDataGraph from './LiveDataGraph';
+import Grid from '@mui/material/Grid';
+import { IconButton, Paper } from "@mui/material";
+import AddIcon from '@mui/icons-material/Add';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 
-interface ArbitrageOpportunity {
-  id: string;
-  profit: number;
-  route: string[];
-  timestamp: string;
+interface CellState {
+  text: string;
+  showGraph: boolean;
 }
 
-const dummyData: ArbitrageOpportunity[] = [
-    {
-      id: "opp1",
-      profit: 15.3,
-      route: ["Binance", "Coinbase", "Kraken"],
-      timestamp: "2025-02-08T10:00:00Z",
-    },
-    {
-      id: "opp2",
-      profit: 8.7,
-      route: ["Gemini", "Bitstamp"],
-      timestamp: "2025-02-08T10:05:00Z",
-    },
-    {
-      id: "opp3",
-      profit: 12.1,
-      route: ["Bitfinex", "Bittrex", "Coincheck"],
-      timestamp: "2025-02-08T10:10:00Z",
-    },
-  ];
-
 const ArbitrageDashboard: React.FC = () => {
-  const [opportunities, setOpportunities] = useState<ArbitrageOpportunity[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [qaoaResult, setQaoaResult] = useState<ArbitrageOpportunity[] | null>(null);
+  const [cells, setCells] = useState<CellState[]>(
+    Array.from({ length: 4 }, () => ({  text: '', showGraph: false }))
+  );
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [inputValue, setInputValue] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
-  const fetchOpportunities = async () => {
-    setLoading(true);
+  const handleOpenDialog = (index: number) => {
+    setSelectedIndex(index);
+    setInputValue(''); // Clear any previous input
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSelectedIndex(null);
+  };
+
+  const handleSubmitDialog = () => {
+    if (!/^[A-Za-z]{3,5}$/.test(inputValue)) {
+      setError('Text must be 3 to 5 alphabetic characters.');
+      return;
+    }
+    if (selectedIndex === null) return;
+    setCells((prev) =>
+      prev.map((cell, i) =>
+        i === selectedIndex ? { text: inputValue, showGraph: true, } : cell
+      )
+    );
+    setDialogOpen(false);
+    setSelectedIndex(null);
+  };
+
+  const handleRunFullScript = () => {
+    // Placeholder for full script execution logic
+    runQAOA();
+    alert("Run full script functionality coming soon!");
+  };
+
+  // Run QAOA on live data (stubbed API call)
+  const runQAOA = async () => {
     try {
-      // Replace with your backend endpoint which supplies arbitrage data.
-      const response = { data: dummyData } as { data: ArbitrageOpportunity[] };
-      setOpportunities(response.data);
+      
     } catch (error) {
-      console.error('Error fetching arbitrage opportunities:', error);
-    } finally {
-      setLoading(false);
+      console.error("Error running QAOA:", error);
     }
   };
 
-  useEffect(() => {
-    fetchOpportunities();
-    // Poll every 5 seconds (adjust as necessary)
-    const interval = setInterval(fetchOpportunities, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-    // Run QAOA on live data (stubbed API call)
-    const runQAOA = async () => {
-        try {
-          // Simulated API endpoint that would run your QAOA logic
-          const response = { data: opportunities } as { data: ArbitrageOpportunity[] };;
-          setQaoaResult(response.data);
-        } catch (error) {
-          console.error('Error running QAOA:', error);
-          setQaoaResult(null);
-        }
-      };
-
   return (
-    <div>
-      <h2>Arbitrage Opportunities</h2>
-      {loading && <p>Loading...</p>}
-      {opportunities.length === 0 && !loading && <p>No opportunities found.</p>}
-      {opportunities.map((opp) => (
-        <div key={opp.id} className="opportunity-card">
-          <p>
-            <strong>Profit:</strong> {opp.profit.toFixed(2)}
-          </p>
-          <p>
-            <strong>Route:</strong> {opp.route.join(' → ')}
-          </p>
-          <p>
-            <strong>Timestamp:</strong> {new Date(opp.timestamp).toLocaleString()}
-          </p>
-        </div>
-      ))}
+    <div className="dashboard-container">
+      <h2>Arbitrage Opportunities Dashboard</h2>
+      <Grid container spacing={2}>
+        {cells.map((cell, index) => (
+          <Grid item xs={6} key={index}>
+            <Paper
+              style={{
+                padding: 16,
+                position: 'relative',
+                minHeight: 200,
+                textAlign: 'center',
+              }}
+            >
+              {/* "+" icon to trigger the popup dialog */}
+              <IconButton
+                onClick={() => handleOpenDialog(index)}
+                style={{ position: 'absolute', top: 8, right: 8 }}
+              >
+                <AddIcon />
+              </IconButton>
+              {cell.showGraph ? (
+                <div>
+                  <p>{cell.text}</p>
+                  {/* Pass an indicator if needed */}
+                  <LiveDataGraph currency = {cell.text}/>
+                </div>
+              ) : (
+                <p>Click + to add graph</p>
+              )}
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Popup Dialog for text entry */}
+      <Dialog open={dialogOpen} onClose={handleCloseDialog}>
+        <DialogTitle>Please Enter Currency</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Currency"
+            type="text"
+            fullWidth
+            variant="standard"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            error={Boolean(error)}
+            helperText={error}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSubmitDialog}>Submit</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
