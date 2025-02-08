@@ -1,3 +1,11 @@
 fastapi
 uvicorn
-psycopg2
+web3
+gql
+requests
+python-dotenv
+requests_toolbelt
+asyncio
+aiohttp
+pymysql
+flask

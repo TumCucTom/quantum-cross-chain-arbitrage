@@ -7,17 +7,17 @@ services:
     container_name: my_mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: mydb
-      MYSQL_USER: myuser
-      MYSQL_PASSWORD: mypassword
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql # Optional
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql # ✅ Ensures DB & User Exist
 
-  # 🔹 Backend API Service (FastAPI)
+  # 🔹 Backend API Service (Flask)
   backend:
     build: ./backend
     container_name: my_backend
@@ -27,24 +27,10 @@ services:
     depends_on:
       - mysql
     env_file:
-      - .env
+      - .env  # ✅ Loads Environment Variables
     volumes:
       - ./backend:/app
-    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
-
-  # 🔹 Frontend Web App (React)
-  frontend:
-    build: ./qxab-frontend
-    container_name: my_frontend
-    restart: always
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    volumes:
-      - ./qxab-frontend:/app
-    environment:
-      - REACT_APP_API_URL=http://backend:8000
+    command: python3 app.py
 
 volumes:
   mysql_data:
