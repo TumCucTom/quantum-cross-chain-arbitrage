@@ -4,3 +4,7 @@ networkx
 numpy
 scipy
 matplotlib
+web3
+gql
+requests
+python-dotenv
