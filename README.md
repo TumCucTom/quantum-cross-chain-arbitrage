@@ -1,7 +1,3 @@
-Here is the updated version of your document without emojis:  
-
----
-
 # Quantum-Enhanced Cross-Chain Arbitrage Bot (QXAB) on Flare  
 
 Built by [Tom](https://www.linkedin.com/in/thomas-bale-5863542a4/), [Dhillon](https://www.linkedin.com/in/dhillon-thurairatnam/), and [Ella](github.com/cowboyella) - Team EthumBards for the ETH Oxford Hackathon  
