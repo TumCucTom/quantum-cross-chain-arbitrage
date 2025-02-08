@@ -34,7 +34,7 @@ services:
 
   # 🔹 Frontend Web App (React)
   frontend:
-    build: ./frontend
+    build: ./qxab-frontend
     container_name: my_frontend
     restart: always
     ports:
@@ -42,7 +42,7 @@ services:
     depends_on:
       - backend
     volumes:
-      - ./frontend:/app
+      - ./qxab-frontend:/app
     environment:
       - REACT_APP_API_URL=http://backend:8000
 
