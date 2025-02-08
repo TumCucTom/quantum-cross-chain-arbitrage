@@ -19,6 +19,7 @@ interface ArbitrageOpportunity {
 
 interface LiveDataGraphProps {
   currency: string;
+  isHistorical: boolean;
 }
 
 const dummyData: ArbitrageOpportunity[] = [
@@ -38,10 +39,9 @@ const dummyData: ArbitrageOpportunity[] = [
     }
 ];
   
-  const LiveDataGraph: React.FC<LiveDataGraphProps> = ({ currency }) => {
+  const LiveDataGraph: React.FC<LiveDataGraphProps> = ({ currency, isHistorical }) => {
     const [data, setData] = useState<ArbitrageOpportunity[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [isHistorical, setIsHistorical] = useState<boolean>(false);
     const [sliderValue, setSliderValue] = useState<number>(0);
   
     const fetchLiveData = async () => {
@@ -103,7 +103,11 @@ const dummyData: ArbitrageOpportunity[] = [
     // Fetch live data immediately and then every 3 seconds
   useEffect(() => {
     if (isHistorical) {
-      fetchHistoricalData();
+      const timeout = setTimeout(() => {
+        fetchHistoricalData();
+      }, 500);
+
+      return () => clearTimeout(timeout);
     } else {
       fetchLiveData();
       const interval = setInterval(fetchLiveData, 5000);
@@ -149,18 +153,12 @@ const dummyData: ArbitrageOpportunity[] = [
             <XAxis dataKey="timestamp" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 2 }} dot={{ r: 0.2 }} />
+            <Line type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 2 }} dot={{ r: 2 }} />
           </LineChart>
         </ResponsiveContainer>
       ) : (
         !loading && <p>No data available.</p>
       )}
-      <button
-        onClick={() => setIsHistorical(!isHistorical)}
-        style={{ marginTop: '20px' }}
-      >
-        {isHistorical ? 'Show Live Data' : 'Show Historical Data'}
-      </button>
 
         {/* Interactive controls for historical mode */}
         {isHistorical && (

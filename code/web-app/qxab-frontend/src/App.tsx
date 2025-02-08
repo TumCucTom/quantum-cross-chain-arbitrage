@@ -1,5 +1,5 @@
 import './App.css'
-import ArbitrageDashboard from './components/ArbitageDashboard';
+import ArbitrageDashboard from './components/HomeDashboard';
 
 
 function App() {
@@ -7,9 +7,6 @@ function App() {
   return (
     <>
       <div className="App">
-      <header>
-        <h1>Quantum-Enhanced Cross-Chain Arbitrage Bot</h1>
-      </header>
       <main>
         <ArbitrageDashboard />
       </main>
