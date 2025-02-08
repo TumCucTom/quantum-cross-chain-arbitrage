@@ -127,7 +127,7 @@ const historicalData: ArbitrageOpportunity[] = [
     const fetchLiveData = async () => {
       setLoading(true);
       try {
-        // This endpoint should return an array of data points: { time: string, value: number }
+        // WHERE THE API ENDPOINT WOULD BE CALLED FOR LIVE DATA!! CURRENTLY DUMMY DATA
         const response = { data: dummyData } as { data: ArbitrageOpportunity[] };;
         setData(response.data);
       } catch (error) {
@@ -141,7 +141,7 @@ const historicalData: ArbitrageOpportunity[] = [
     const fetchHistoricalData = async () => {
       setLoading(true);
       try {
-        // Simulated API call returning historical data
+        // WHERE THE API ENDPOINT WOULD BE CALLED FOR HISTORICAL DATA!! CURRENTLY DUMMY DATA
         const response = { data: historicalData } as { data: ArbitrageOpportunity[] };
         setData(response.data);
         setSliderValue(response.data.length);
