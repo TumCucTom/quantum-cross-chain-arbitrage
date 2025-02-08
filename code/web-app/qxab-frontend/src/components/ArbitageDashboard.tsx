@@ -99,7 +99,7 @@ const ArbitrageDashboard: React.FC = () => {
                 <div>
                   <p>{cell.text}</p>
                   {/* Pass an indicator if needed */}
-                  <LiveDataGraph currency = {cell.text}/>
+                  <LiveDataGraph currency = {cell.text} isHistorical={false}/>
 
                   <IconButton
                     onClick={() => handleOpenFullScreen(cell.text)}
@@ -150,7 +150,7 @@ const ArbitrageDashboard: React.FC = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-        <LiveDataGraph currency={fullScreenCurrency} />
+        <LiveDataGraph currency={fullScreenCurrency} isHistorical={false}/>
         </DialogContent>
       </Dialog>
 
