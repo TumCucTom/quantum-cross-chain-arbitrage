@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS  # Import Flask-CORS
 import mysql.connector
 import pymysql
@@ -96,23 +96,24 @@ def import_csv_to_db():
 # 🔹 Flask API Endpoints
 # -----------------------------
 
-@app.route("/")
-def read_root():
-    return jsonify({"message": "Hello, World!"})
-
-@app.route("/users")
-def get_users():
-    """Fetches users from the database."""
+@app.route("/ftso-live-prices", methods=["POST"])
+def fetch_ftso_live_prices():
+    """
+    Calls an external Python script (`fetch_ftso_live_prices.py`) to get live FTSO prices.
+    """
     try:
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM users;")
-        users = cur.fetchall()
-        cur.close()
-        logger.info("✅ Users fetched successfully from database.")
-        return jsonify({"users": users})
+        symbols = request.json.get("symbols", [])
+        result = subprocess.run(["python", "fetch_ftso_live_prices.py", json.dumps(symbols)], capture_output=True, text=True)
+
+        if result.returncode != 0:
+            return jsonify({"status": "error", "message": result.stderr}), 500
+
+        live_data = json.loads(result.stdout)
+        return jsonify({"status": "success", "data": live_data})
+
     except Exception as e:
-        logger.error(f"❌ Error fetching users: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)})
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @app.route("/live-data")
 def fetch_and_store_live_data():

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  fastapi:
+    build: .
+    container_name: fastapi-app
+    environment:
+      # These environment variables are passed into the container
+      DB_HOST: mysql
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+      MYSQL_DATABASE: mydb
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+    # Optional: For local development, you might want to mount your code directly:
+    # volumes:
+    #   - ./app:/app
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

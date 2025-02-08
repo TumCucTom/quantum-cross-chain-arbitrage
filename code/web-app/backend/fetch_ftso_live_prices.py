@@ -4,12 +4,12 @@ import ssl
 import certifi
 from datetime import datetime
 from web3 import AsyncHTTPProvider, AsyncWeb3
-from typing import List, Tuple
+from typing import List, Dict
 
 # FtsoV2 address (Flare Testnet Coston2)
 FTSOV2_ADDRESS = "0x3d893C53D9e8056135C26C8c638B76C8b60Df726"
 RPC_URL = "https://coston2-api.flare.network/ext/C/rpc"
-
+# Feed IDs for Flare FTSO
 FEED_IDS = {
     "AAVE": "0x01414156452f555344000000000000000000000000",
     "ADA": "0x014144412f55534400000000000000000000000000",
@@ -53,46 +53,38 @@ ABI_JSON_STRING = '''[
     ],"stateMutability":"payable","type":"function"}
 ]'''
 
-# Convert ABI from JSON string to Python list
 ABI = json.loads(ABI_JSON_STRING)
 
-async def main() -> Tuple[List[int], List[int], int]:
-    # Create SSL context using certifi
+async def fetch_feed_data(symbols: List[str]) -> Dict[str, List[Dict[str, str]]]:
     ssl_context = ssl.create_default_context(cafile=certifi.where())
-
-    # Initialize Web3 (without session)
     w3 = AsyncWeb3(AsyncHTTPProvider(RPC_URL))
 
-    # Verify connection
     is_connected = await w3.is_connected()
-    print("Web3 connection successful:", is_connected)
-
     if not is_connected:
         raise ConnectionError("Failed to connect to the Web3 provider.")
 
-    # Set up contract instance (with valid ABI)
     ftsov2 = w3.eth.contract(address=w3.to_checksum_address(FTSOV2_ADDRESS), abi=ABI)
 
-    # Fetch current feeds
-    for feed_id in FEED_IDS:
+    results = []
+    for symbol in symbols:
+        feed_id = FEED_IDS.get(symbol)
+        if not feed_id:
+            continue
+
         feeds, decimals, timestamp = await ftsov2.functions.getFeedById(feed_id).call()
+        real_price = feeds / (10 ** decimals)
+        human_time = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S UTC')
 
-        # Print results
-        print("Feed ID:", feed_id)
-        print("Feeds:", feeds)
-        print("Decimals:", decimals)
-        print("Timestamp:", timestamp)
+        results.append({
+            "symbol": symbol,
+            "feed_id": feed_id,
+            "price": real_price,
+            "timestamp": human_time
+        })
 
-        data = feeds, decimals, timestamp
-        process_feed_data(*data)
-        print("-------")
-
-def process_feed_data(feed: int, decimals: int, timestamp: int):
-    real_price = feed / (10 ** decimals)
-    human_time = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S UTC')
-    print(f"Actual Price: {real_price} USD")
-    print(f"Timestamp: {human_time}")
-
+    return {"feeds": results}
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    symbols_to_fetch = ["BTC", "ETH", "FLR"]  # Example usage
+    data = asyncio.run(fetch_feed_data(symbols_to_fetch))
+    print(json.dumps(data, indent=4))
