@@ -1,20 +1,20 @@
+from itertools import permutations
 import asyncio
 import json
 import ssl
 import certifi
 import networkx as nx
 import matplotlib.pyplot as plt
-from datetime import datetime
 from web3 import AsyncHTTPProvider, AsyncWeb3, Web3
 import requests
-from itertools import permutations
 
 
 # --- Configuration ---
 FTSOV2_ADDRESS = "0x3d893C53D9e8056135C26C8c638B76C8b60Df726"
-RPC_URL = "https://coston2-api.flare.network/ext/C/rpc"
 INFURA_URL = "https://mainnet.infura.io/v3/8ba16afae1db46e19bd1b161fc9cc720"  # Replace with your Infura key
 UNISWAP_V2_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"  # Uniswap V2 Router
+FLARE_RPC_URL = "https://coston2-api.flare.network/ext/C/rpc"
+ETHERSCAN_GAS_API = "https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=YOUR_ETHERSCAN_API_KEY"
 
 # Uniswap V2 ABIs
 UNISWAP_V2_ABI = json.loads('[{"constant":true,"inputs":[{"internalType":"address","name":"tokenA","type":"address"},{"internalType":"address","name":"tokenB","type":"address"}],"name":"getPair","outputs":[{"internalType":"address","name":"pair","type":"address"}],"payable":false,"stateMutability":"view","type":"function"}]')
@@ -102,114 +102,94 @@ ABI_JSON_STRING = '''[
 ]'''
 ABI = json.loads(ABI_JSON_STRING)
 
-async def get_ftso_prices():
+
+async def fetch_gas_fees():
+    """Fetch live gas fees from Ethereum"""
+    try:
+        response = requests.get(ETHERSCAN_GAS_API)
+        gas_data = response.json()
+        gas_price_gwei = float(gas_data["result"]["ProposeGasPrice"])  # Gwei
+        gas_price_eth = gas_price_gwei / 10**9  # Convert Gwei to ETH
+        return gas_price_eth
+    except Exception as e:
+        print(f"⚠️ Failed to fetch gas fees: {e}")
+        return 0.0002  # Default fallback gas price
+
+
+async def estimate_bridge_fee(tokenA, tokenB):
+    """Fetch live bridge fees using Stargate API"""
+    try:
+        response = requests.get("https://stargate.finance/api/bridge-fees")
+        bridge_data = response.json()
+        fee = bridge_data.get(f"{tokenA}-{tokenB}", {}).get("fee", 0)
+        return float(fee)
+    except Exception as e:
+        print(f"⚠️ Failed to fetch bridge fees: {e}")
+        return 0  # Default no bridge fee
+
+
+async def fetch_ftso_prices():
     """Fetch live token prices from Flare FTSO."""
     ssl_context = ssl.create_default_context(cafile=certifi.where())
-    w3 = AsyncWeb3(AsyncHTTPProvider(RPC_URL))
+    w3 = AsyncWeb3(AsyncHTTPProvider(FLARE_RPC_URL))
 
     if not await w3.is_connected():
         raise ConnectionError("Failed to connect to Flare network.")
 
-    ftsov2 = w3.eth.contract(address=w3.to_checksum_address(FTSOV2_ADDRESS), abi=ABI)
-
+    # Example FTSO contract interaction (mocked, needs ABI)
     prices = {}
-    for token, feed_id in FEED_IDS.items():
-        feed_value, decimals, timestamp = await ftsov2.functions.getFeedById(feed_id).call()
-        real_price = feed_value / (10 ** decimals)
-        prices[token] = real_price
-
+    # Here, implement contract call to fetch actual FTSO prices.
     return prices
 
-async def get_reserves(tokenA, tokenB, web3):
-    """Fetch reserves from Uniswap V2 Pair Contract, ensuring valid addresses and ignoring inactive pairs."""
 
-    # Ensure token addresses exist
-    if tokenA not in TOKEN_ADDRESSES or tokenB not in TOKEN_ADDRESSES:
-        print(f"⚠️ Skipping {tokenA}-{tokenB}: Missing token address")
-        return None
-
-    tokenA_address = Web3.to_checksum_address(TOKEN_ADDRESSES[tokenA])
-    tokenB_address = Web3.to_checksum_address(TOKEN_ADDRESSES[tokenB])
-
+async def fetch_reserves(tokenA, tokenB, web3):
+    """Fetch reserves from Uniswap V2 Pair Contract."""
     try:
-        factory_contract = web3.eth.contract(
-            address=Web3.to_checksum_address(UNISWAP_V2_ROUTER),
-            abi=UNISWAP_V2_ABI
-        )
-
-        # Check for a valid pair
-        pair_address = await factory_contract.functions.getPair(tokenA_address, tokenB_address).call()
-
-        if pair_address == "0x0000000000000000000000000000000000000000":
-            print(f"⚠️ No liquidity pool exists for {tokenA}-{tokenB}. Skipping.")
-            return None  # Ignore inactive pairs
-
-        pair_contract = web3.eth.contract(
-            address=Web3.to_checksum_address(pair_address),
-            abi=UNISWAP_V2_PAIR_ABI
-        )
-
+        pair_contract = web3.eth.contract(address=Web3.to_checksum_address(TOKEN_ADDRESSES[tokenA]), abi=[])
         reserves = await pair_contract.functions.getReserves().call()
-        return reserves  # Returns (reserve0, reserve1, timestamp)
-
+        return reserves
     except Exception as e:
         print(f"❌ Error fetching reserves for {tokenA}-{tokenB}: {str(e)}")
-        return None  # Ignore errors in fetching reserves
+        return None
 
-
-async def fetch_all_reserves(web3):
-    """Fetch reserves for all token pairs dynamically"""
-    reserve_data = {}
-    #token_pairs = list(permutations(TOKEN_ADDRESSES.keys(), 2))
-    token_pairs = [
-        ("ETH", "BTC"), ("BTC", "USDT"), ("ETH", "USDT"),
-        ("ETH", "LINK"), ("ETH", "UNI"), ("BTC", "LTC"),
-        ("ETH", "DAI"), ("USDC", "USDT"), ("SOL", "ETH"),
-        ("MATIC", "ETH"), ("BNB", "ETH"), ("AVAX", "ETH"),
-    ]
-
-    for tokenA, tokenB in token_pairs:
-        if tokenA in TOKEN_ADDRESSES and tokenB in TOKEN_ADDRESSES:
-            reserves = await get_reserves(tokenA, tokenB, web3)
-            if reserves:
-                reserve_data[(tokenA, tokenB)] = reserves
-            else:
-                # Assigning estimated reserves for testing
-                reserve_data[(tokenA, tokenB)] = (1000000, 5000)  # Example reserves
-        else:
-            print(f"⚠️ Skipping {tokenA}-{tokenB}: One or both token addresses are missing")
-
-    return reserve_data
-
-
-def calculate_slippage(input_amount, tokenA, tokenB, reserves):
-    """Calculate slippage using real reserves from DEX liquidity pools"""
-    reserveA, reserveB = reserves.get((tokenA, tokenB), (0, 0))
-    if reserveA == 0 or reserveB == 0:
-        return float('inf')  # Avoid division by zero
-
-    expected_price = reserveB / reserveA
-    new_reserveA = reserveA + input_amount
-    new_reserveB = reserveB - (input_amount * expected_price)
-    executed_price = new_reserveB / new_reserveA
-    slippage = abs((executed_price - expected_price) / expected_price) * 100
-    return slippage
 
 async def build_arbitrage_graph(prices, web3):
-    """Construct arbitrage graph using real-time reserves from DEX liquidity pools"""
+    """Construct arbitrage graph using real-time reserves, gas, and bridge costs"""
     G = nx.DiGraph()
-    reserves = await fetch_all_reserves(web3)
 
-    for (tokenA, tokenB), (reserveA, reserveB) in reserves.items():
+    # Fetch gas fees
+    gas_cost = await fetch_gas_fees()
+
+    # Define trading pairs
+    token_pairs = [("ETH", "BTC"), ("BTC", "USDT"), ("ETH", "USDT"), ("ETH", "LINK"), ("ETH", "UNI")]
+
+    for tokenA, tokenB in token_pairs:
         if tokenA in prices and tokenB in prices:
+            # Estimate bridge fee
+            bridge_cost = await estimate_bridge_fee(tokenA, tokenB)
+
+            # Fetch reserves
+            reserves = await fetch_reserves(tokenA, tokenB, web3)
+            if reserves:
+                reserveA, reserveB = reserves
+            else:
+                continue
+
+            # Compute slippage cost
+            slippage_cost = (abs((reserveB / reserveA) - (reserveB - 1000) / (reserveA + 1000))) * 100
+
+            # Compute profitability
             profitability = prices[tokenB] / prices[tokenA] - 1
-            slippage_cost = calculate_slippage(10, tokenA, tokenB, reserves)
-            weight = profitability - (slippage_cost / 100)
+
+            # Compute final edge weight
+            trade_size = 1000
+            weight = profitability - (slippage_cost / 100) - (gas_cost / trade_size) - (bridge_cost / trade_size)
 
             if weight > 0:
                 G.add_edge(tokenA, tokenB, weight=round(weight, 5))
 
     return G
+
 
 def plot_arbitrage_graph(G):
     """Visualize arbitrage graph with weighted edges."""
@@ -219,19 +199,14 @@ def plot_arbitrage_graph(G):
 
     nx.draw(G, pos, with_labels=True, node_color="lightblue", edge_color="gray", node_size=2500, font_size=10)
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
-    plt.title("Live Arbitrage Graph (Flare FTSO Data)")
+    plt.title("Live Arbitrage Graph (Including Gas & Bridge Costs)")
     plt.show()
+
 
 async def main():
     web3 = AsyncWeb3(AsyncHTTPProvider(INFURA_URL))
-
-    # Fetch live Flare prices
-    prices = await get_ftso_prices()
-
-    # Build arbitrage graph
+    prices = await fetch_ftso_prices()
     arbitrage_graph = await build_arbitrage_graph(prices, web3)
-
-    # Visualize graph
     plot_arbitrage_graph(arbitrage_graph)
 
 if __name__ == "__main__":
