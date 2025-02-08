@@ -56,7 +56,6 @@ async def fetch_market_data() -> dict:
 
     return market_data
 
-
 # -----------------------------
 # 2️⃣ Build Arbitrage Graph with Live Data
 # -----------------------------
