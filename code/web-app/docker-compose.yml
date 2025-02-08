@@ -1,36 +1,35 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  # 🔹 MySQL Database Service
   mysql:
-    image: mysql:latest
-    container_name: my_mysql
+    image: mysql:8.0
+    container_name: my_mysql_container
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
     ports:
       - "3308:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql # ✅ Ensures DB & User Exist
+      - mysql_data:/var/lib/mysql  # Ensure this is a clean volume
 
-  # 🔹 Backend API Service (Flask)
-  backend:
+  python-app:
     build: ./backend
-    container_name: my_backend
+    container_name: python_container
     restart: always
-    ports:
-      - "8000:8000"
     depends_on:
       - mysql
-    env_file:
-      - .env  # ✅ Loads Environment Variables
+    environment:
+      DB_HOST: mysql
+      DB_USER: myuser
+      DB_PASSWORD: mypassword
+      DB_NAME: mydatabase
+    ports:
+      - "5002:5000"
     volumes:
       - ./backend:/app
-    command: python3 app.py
 
 volumes:
   mysql_data:

@@ -1,12 +1,12 @@
 from flask import Flask, jsonify
-import time
+import mysql.connector
 import pymysql
 import os
 import subprocess
 import json
 import csv
+import time
 import logging
-import cryptography
 
 app = Flask(__name__)
 
@@ -20,29 +20,28 @@ logger = logging.getLogger(__name__)
 # 🔹 Database Configuration
 # -----------------------------
 
-# ✅ Load Environment Variables
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST"),
-    "user": os.getenv("MYSQL_USER"),
-    "password": os.getenv("MYSQL_PASSWORD"),
-    "database": os.getenv("MYSQL_DATABASE"),
-    "port": int(os.getenv("MYSQL_PORT", 3306))  # Ensure port is an integer
+# Database connection
+db_config = {
+    "host": os.getenv("DB_HOST", "mysql"),
+    "user": os.getenv("DB_USER", "myuser"),
+    "password": os.getenv("DB_PASSWORD", "mypassword"),
+    "database": os.getenv("DB_NAME", "mydatabase"),
 }
 
-# ✅ Retry Connection Logic
-MAX_RETRIES = 10
-for attempt in range(MAX_RETRIES):
-    try:
-        conn = pymysql.connect(**DB_CONFIG)
-        logger.info("✅ Database connection successful!")
-        break  # Exit loop on successful connection
-    except pymysql.err.OperationalError as e:
-        logger.warning(f"⚠️ Attempt {attempt + 1}/{MAX_RETRIES}: Unable to connect with {DB_CONFIG}"
-                       f". Retrying in 5 seconds...")
-        time.sleep(5)
-else:
-    logger.error("❌ Max retries exceeded. Could not connect to the database.")
-    raise Exception("❌ Max retries exceeded. Could not connect to the database.")
+def get_db_connection():
+    retries = 5
+    while retries > 0:
+        try:
+            conn = mysql.connector.connect(**db_config)
+            return conn
+        except mysql.connector.Error as err:
+            print(f"Database connection failed: {err}")
+            retries -= 1
+            time.sleep(5)  # Wait before retrying
+    raise Exception("Could not connect to the database after multiple attempts")
+
+
+conn = get_db_connection()
 
 # -----------------------------
 # ✅ Ensure Database Table Exists
@@ -181,4 +180,4 @@ def get_historical_data():
         return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == "__main__":
-    app.run(host="localhost", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

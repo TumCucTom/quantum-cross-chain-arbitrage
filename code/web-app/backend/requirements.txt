@@ -1,5 +1,3 @@
-fastapi
-uvicorn
 web3
 gql
 requests
@@ -9,3 +7,4 @@ asyncio
 aiohttp
 pymysql
 flask
+mysql-connector-python

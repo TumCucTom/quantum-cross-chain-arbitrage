@@ -11,3 +11,4 @@ python-dotenv
 requests_toolbelt
 asyncio
 aiohttp
+mysql-connector-python
