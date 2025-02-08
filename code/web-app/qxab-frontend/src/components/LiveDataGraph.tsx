@@ -12,6 +12,7 @@ import {
 interface ArbitrageOpportunity {
     feed: string;
     timestamp: number;
+    price: number;
     liquidity1: number;
     liquidity2: number;
 }
@@ -24,109 +25,24 @@ const dummyData: ArbitrageOpportunity[] = [
     {
       feed: 'BTC/ETH',
       timestamp: 1622563200,
-      liquidity1: 0.1,
-      liquidity2: 0.2,
+      price: 5,
+      liquidity1: 5,
+      liquidity2: 9
     },
     {
-      feed: 'BTC/USDT',
-      timestamp: 1622563300,
-      liquidity1: 0.3,
-      liquidity2: 0.4,
-    },
-    {
-      feed: 'ETH/USDT',
-      timestamp: 1622563400,
-      liquidity1: 0.5,
-      liquidity2: 0.6,
-    },
-];
-
-const historicalData: ArbitrageOpportunity[] = [
-  {
-    feed: 'BTC/ETH',
-    timestamp: 1622563200,
-    liquidity1: 0.1,
-    liquidity2: 0.2,
-  },
-  {
-    feed: 'BTC/USDT',
-    timestamp: 1622563300,
-    liquidity1: 0.3,
-    liquidity2: 0.4,
-  },
-  {
-    feed: 'ETH/USDT',
-    timestamp: 1622563400,
-    liquidity1: 0.5,
-    liquidity2: 0.6,
-  },
-  {
-    feed: 'BTC/ETH',
-    timestamp: 1622563500,
-    liquidity1: 0.7,
-    liquidity2: 0.8,
-  },
-  {
-    feed: 'BTC/USDT',
-    timestamp: 1622563600,
-    liquidity1: 0.9,
-    liquidity2: 1.0,
-  },
-  {
-    feed: 'ETH/USDT',
-    timestamp: 1622563700,
-    liquidity1: 1.1,
-    liquidity2: 1.2,
-  },
-  {
-    feed: 'BTC/ETH',
-    timestamp: 1622563800,
-    liquidity1: 1.3,
-    liquidity2: 1.4,
-  },
-  {
-    feed: 'BTC/USDT',
-    timestamp: 1622563900,
-    liquidity1: 1.5,
-    liquidity2: 1.6,
-  },
-  {
-    feed: 'ETH/USDT',
-    timestamp: 1622564000,
-    liquidity1: 1.7,
-    liquidity2: 1.8,
-  },
-  {
-    feed: 'BTC/ETH',
-    timestamp: 1622564100,
-    liquidity1: 1.9,
-    liquidity2: 2.0,
-  },
-  {
-    feed: 'BTC/USDT',
-    timestamp: 1622564200,
-    liquidity1: 2.1,
-    liquidity2: 2.2,
-  },
-  {
-    feed: 'ETH/USDT',
-    timestamp: 1622564300,
-    liquidity1: 2.3,
-    liquidity2: 2.4,
-  },
-  {
-    feed: 'BTC/ETH',
-    timestamp: 1622564400,
-    liquidity1: 2.5,
-    liquidity2: 2.6,
-  },
+      feed: 'BTC/ETH',
+      timestamp: 1622563200,
+      price: 5,
+      liquidity1: 5,
+      liquidity2: 9
+    }
 ];
   
   const LiveDataGraph: React.FC<LiveDataGraphProps> = ({ currency }) => {
     const [data, setData] = useState<ArbitrageOpportunity[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [isHistorical, setIsHistorical] = useState<boolean>(false);
-    const [sliderValue, setSliderValue] = useState<number>(historicalData.length);
+    const [sliderValue, setSliderValue] = useState<number>(0);
   
     const fetchLiveData = async () => {
       setLoading(true);
@@ -157,10 +73,11 @@ const historicalData: ArbitrageOpportunity[] = [
           throw new Error(`Failed to fetch historical data: ${response.statusText}`);
         }
         const result = await response.json();
+        const opportunities: ArbitrageOpportunity[] = transformHistoryData(result);
 
         if (result.status === "success") {
-          setData(result.history);
-          setSliderValue(result.history.length);
+          setData(opportunities);
+          setSliderValue(opportunities.length);
         } else {
           console.error("API Error:", result.message);
         }
@@ -171,7 +88,17 @@ const historicalData: ArbitrageOpportunity[] = [
       }
     };
 
-
+    const transformHistoryData = (data: any): ArbitrageOpportunity[] => {
+      return data.history.map((row: any[]) => {
+        return {
+          feed: row[0],
+          timestamp: new Date(row[4]).getTime() / 1000,
+          price: parseFloat(row[1]) || 0,
+          liquidity1: row[2] !== null ? parseFloat(row[2]) : 0,
+          liquidity2: row[2] !== null ? parseFloat(row[2]) : 0,
+        };
+      });
+    };
 
     // Fetch live data immediately and then every 3 seconds
   useEffect(() => {
@@ -222,7 +149,7 @@ const historicalData: ArbitrageOpportunity[] = [
             <XAxis dataKey="timestamp" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="liquidity1" stroke="#8884d8" activeDot={{ r: 8 }} />
+            <Line type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 2 }} dot={{ r: 0.2 }} />
           </LineChart>
         </ResponsiveContainer>
       ) : (
