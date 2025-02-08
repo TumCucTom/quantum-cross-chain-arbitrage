@@ -10,115 +10,119 @@ import {
   } from 'recharts';
 
 interface ArbitrageOpportunity {
-    id: string;
-    profit: number;
-    route: string[];
-    timestamp: string;
+    feed: string;
+    timestamp: number;
+    liquidity1: number;
+    liquidity2: number;
+}
+
+interface LiveDataGraphProps {
+  currency: string;
 }
 
 const dummyData: ArbitrageOpportunity[] = [
     {
-      id: '1',
-      profit: 0.002,
-      route: ['BTC', 'ETH', 'USDT'],
-      timestamp: '2021-06-01T12:00:00Z',
+      feed: 'BTC/ETH',
+      timestamp: 1622563200,
+      liquidity1: 0.1,
+      liquidity2: 0.2,
     },
     {
-      id: '2',
-      profit: 0.0015,
-      route: ['BTC', 'USDT'],
-      timestamp: '2021-06-01T12:05:00Z',
+      feed: 'BTC/USDT',
+      timestamp: 1622563300,
+      liquidity1: 0.3,
+      liquidity2: 0.4,
     },
     {
-      id: '3',
-      profit: 0.003,
-      route: ['ETH', 'USDT'],
-      timestamp: '2021-06-01T12:10:00Z',
+      feed: 'ETH/USDT',
+      timestamp: 1622563400,
+      liquidity1: 0.5,
+      liquidity2: 0.6,
     },
 ];
 
 const historicalData: ArbitrageOpportunity[] = [
   {
-    id: '1',
-    profit: 0.002,
-    route: ['BTC', 'ETH', 'USDT'],
-    timestamp: '2021-06-01T12:00:00Z',
+    feed: 'BTC/ETH',
+    timestamp: 1622563200,
+    liquidity1: 0.1,
+    liquidity2: 0.2,
   },
   {
-    id: '2',
-    profit: 0.0015,
-    route: ['BTC', 'USDT'],
-    timestamp: '2021-06-01T12:05:00Z',
+    feed: 'BTC/USDT',
+    timestamp: 1622563300,
+    liquidity1: 0.3,
+    liquidity2: 0.4,
   },
   {
-    id: '3',
-    profit: 0.003,
-    route: ['ETH', 'USDT'],
-    timestamp: '2021-06-01T12:10:00Z',
+    feed: 'ETH/USDT',
+    timestamp: 1622563400,
+    liquidity1: 0.5,
+    liquidity2: 0.6,
   },
   {
-    id: '4',
-    profit: 0.0025,
-    route: ['BTC', 'ETH', 'USDT'],
-    timestamp: '2021-06-01T12:15:00Z',
+    feed: 'BTC/ETH',
+    timestamp: 1622563500,
+    liquidity1: 0.7,
+    liquidity2: 0.8,
   },
   {
-    id: '5',
-    profit: 0.001,
-    route: ['BTC', 'USDT'],
-    timestamp: '2021-06-01T12:20:00Z',
+    feed: 'BTC/USDT',
+    timestamp: 1622563600,
+    liquidity1: 0.9,
+    liquidity2: 1.0,
   },
   {
-    id: '6',
-    profit: 0.0028,
-    route: ['ETH', 'USDT'],
-    timestamp: '2021-06-01T12:25:00Z',
+    feed: 'ETH/USDT',
+    timestamp: 1622563700,
+    liquidity1: 1.1,
+    liquidity2: 1.2,
   },
   {
-    id: '7',
-    profit: 0.0022,
-    route: ['BTC', 'ETH', 'USDT'],
-    timestamp: '2021-06-01T12:30:00Z',
+    feed: 'BTC/ETH',
+    timestamp: 1622563800,
+    liquidity1: 1.3,
+    liquidity2: 1.4,
   },
   {
-    id: '8',
-    profit: 0.0013,
-    route: ['BTC', 'USDT'],
-    timestamp: '2021-06-01T12:35:00Z',
+    feed: 'BTC/USDT',
+    timestamp: 1622563900,
+    liquidity1: 1.5,
+    liquidity2: 1.6,
   },
   {
-    id: '9',
-    profit: 0.0029,
-    route: ['ETH', 'USDT'],
-    timestamp: '2021-06-01T12:40:00Z',
+    feed: 'ETH/USDT',
+    timestamp: 1622564000,
+    liquidity1: 1.7,
+    liquidity2: 1.8,
   },
   {
-    id: '10',
-    profit: 0.0021,
-    route: ['BTC', 'ETH', 'USDT'],
-    timestamp: '2021-06-01T12:45:00Z',
+    feed: 'BTC/ETH',
+    timestamp: 1622564100,
+    liquidity1: 1.9,
+    liquidity2: 2.0,
   },
   {
-    id: '11',
-    profit: 0.0012,
-    route: ['BTC', 'USDT'],
-    timestamp: '2021-06-01T12:50:00Z',
+    feed: 'BTC/USDT',
+    timestamp: 1622564200,
+    liquidity1: 2.1,
+    liquidity2: 2.2,
   },
   {
-    id: '12',
-    profit: 0.0027,
-    route: ['ETH', 'USDT'],
-    timestamp: '2021-06-01T12:55:00Z',
+    feed: 'ETH/USDT',
+    timestamp: 1622564300,
+    liquidity1: 2.3,
+    liquidity2: 2.4,
   },
   {
-    id: '13',
-    profit: 0.0023,
-    route: ['BTC', 'ETH', 'USDT'],
-    timestamp: '2021-06-01T13:00:00Z',
+    feed: 'BTC/ETH',
+    timestamp: 1622564400,
+    liquidity1: 2.5,
+    liquidity2: 2.6,
   },
 ];
   
-  const LiveDataGraph: React.FC = () => {
+  const LiveDataGraph: React.FC<LiveDataGraphProps> = ({ currency }) => {
     const [data, setData] = useState<ArbitrageOpportunity[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [isHistorical, setIsHistorical] = useState<boolean>(false);
@@ -127,7 +131,7 @@ const historicalData: ArbitrageOpportunity[] = [
     const fetchLiveData = async () => {
       setLoading(true);
       try {
-        // WHERE THE API ENDPOINT WOULD BE CALLED FOR LIVE DATA!! CURRENTLY DUMMY DATA
+        // WHERE THE API ENDPOINT WOULD BE CALLED FOR HISTORICAL DATA!! CURRENTLY DUMMY DATA
         const response = { data: dummyData } as { data: ArbitrageOpportunity[] };;
         setData(response.data);
       } catch (error) {
@@ -142,7 +146,7 @@ const historicalData: ArbitrageOpportunity[] = [
       setLoading(true);
       try {
         // WHERE THE API ENDPOINT WOULD BE CALLED FOR HISTORICAL DATA!! CURRENTLY DUMMY DATA
-        const response = { data: historicalData } as { data: ArbitrageOpportunity[] };
+        const response = { data: historicalData } as { data: ArbitrageOpportunity[] }; //API CALL TO CURRENCY DATA
         setData(response.data);
         setSliderValue(response.data.length);
       } catch (error) {
@@ -158,7 +162,7 @@ const historicalData: ArbitrageOpportunity[] = [
       fetchHistoricalData();
     } else {
       fetchLiveData();
-      const interval = setInterval(fetchLiveData, 3000);
+      const interval = setInterval(fetchLiveData, 5000);
       return () => clearInterval(interval);
     }
   }, [isHistorical]);
@@ -201,7 +205,7 @@ const historicalData: ArbitrageOpportunity[] = [
             <XAxis dataKey="timestamp" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="profit" stroke="#8884d8" activeDot={{ r: 8 }} />
+            <Line type="monotone" dataKey="liquidity1" stroke="#8884d8" activeDot={{ r: 8 }} />
           </LineChart>
         </ResponsiveContainer>
       ) : (
