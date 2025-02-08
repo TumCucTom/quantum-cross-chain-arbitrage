@@ -1,5 +1,7 @@
 # Quantum-Enhanced Cross-Chain Arbitrage Bot (QXAB) on Flare
 
+Built by [Tom](https://www.linkedin.com/in/thomas-bale-5863542a4/), [Dhillon](https://www.linkedin.com/in/dhillon-thurairatnam/) and [Ella](github.com/cowboyella) - Team EthumBards for the ETH Oxford Hackathon
+
 ## 📌 Overview
 **Quantum-Enhanced Cross-Chain Arbitrage Bot (QXAB)** is an innovative arbitrage system that leverages **Quantum Optimization (QAOA)** and **Flare’s blockchain protocols** to execute high-speed, secure, and profitable arbitrage trades across multiple decentralized finance (DeFi) ecosystems.
 
