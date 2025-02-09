@@ -161,7 +161,7 @@ def run_qaoa():
             reserves = await pair_contract.functions.getReserves().call()
             return reserves
         except Exception as e:
-            print(f"❌ Error fetching reserves for {tokenA}-{tokenB}: {str(e)}")
+            print(f" Error fetching reserves for {tokenA}-{tokenB}: {str(e)}")
             return None
 
 
@@ -231,9 +231,7 @@ def run_qaoa():
     # Number of edges
     num_edges = len(edge_list)
 
-    # -------------------------
-    # Step 2: Define QUBO Problem
-    # -------------------------
+
     qubo = QuadraticProgram()
 
     # Add binary variables for each edge
@@ -262,9 +260,7 @@ def run_qaoa():
     # Print QUBO formulation
     print("\nQUBO Formulation:\n", qubo.export_as_lp_string())
 
-    # -------------------------
-    # Step 3: Solve Using QAOA in Qiskit
-    # -------------------------
+ 
     # Convert QuadraticProgram to Qiskit's QUBO format
     qubo_operator = from_docplex_mp(qubo)
 
@@ -276,9 +272,7 @@ def run_qaoa():
     optimizer = MinimumEigenOptimizer(qaoa)
     result = optimizer.solve(qubo_operator)
 
-    # -------------------------
-    # Step 4: Extract Results
-    # -------------------------
+
     print("\nOptimal Arbitrage Cycle (Binary Representation):", result.x)
     print("Optimized Profit:", -result.fval)  # Negate since we minimized
 
@@ -288,9 +282,7 @@ def run_qaoa():
     # Convert binary results to actual arbitrage cycle
     selected_edges = [edge_list[i] for i in range(num_edges) if result.x[i] == 1]
 
-    # -------------------------
-    # Step 5: Run on Real Quantum Computer
-    # -------------------------
+   
 
     # To execute on a real IBM quantum device:
 

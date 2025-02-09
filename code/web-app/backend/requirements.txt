@@ -15,6 +15,3 @@ qiskit
 pennylane
 networkx
 numpy
-qiskit-optimization
-qiskit-algorithms
-qiskit-aer
