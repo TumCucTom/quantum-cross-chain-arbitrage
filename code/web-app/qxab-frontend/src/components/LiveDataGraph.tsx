@@ -21,42 +21,44 @@ interface LiveDataGraphProps {
   currency: string;
   isHistorical: boolean;
 }
-
-const dummyData: ArbitrageOpportunity[] = [
-    {
-      feed: 'BTC/ETH',
-      timestamp: 1622563200,
-      price: 5,
-      liquidity1: 5,
-      liquidity2: 9
-    },
-    {
-      feed: 'BTC/ETH',
-      timestamp: 1622563200,
-      price: 5,
-      liquidity1: 5,
-      liquidity2: 9
-    }
-];
   
   const LiveDataGraph: React.FC<LiveDataGraphProps> = ({ currency, isHistorical }) => {
     const [data, setData] = useState<ArbitrageOpportunity[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [sliderValue, setSliderValue] = useState<number>(0);
+
+    const [windowLength, setWindowLength] = useState<number>(0);
+    const [windowStart, setWindowStart] = useState<number>(0);
   
     const fetchLiveData = async () => {
       setLoading(true);
       try {
-        // WHERE THE API ENDPOINT WOULD BE CALLED FOR HISTORICAL DATA!! CURRENTLY DUMMY DATA
-        const response = { data: dummyData } as { data: ArbitrageOpportunity[] };;
-        setData(response.data);
+        const response = await fetch("http://localhost:5002/ftso-live-prices", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // Send the current currency as a single-element array.
+          body: JSON.stringify({ symbols: [currency] }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch live data: ${response.statusText}`);
+        }
+        const result = await response.json();
+        const opportunities: ArbitrageOpportunity[] = transformLiveData(result);
+        if (result.status === "success") {
+          // Assuming result.data is an array of ArbitrageOpportunity objects:
+          setData(opportunities);
+        } else {
+          console.error("API Error:", result.message);
+        }
       } catch (error) {
         console.error("Error fetching live data:", error);
       } finally {
         setLoading(false);
       }
     };
-
+    
     // Function to simulate fetching historical data
     const fetchHistoricalData = async () => {
       setLoading(true);
@@ -77,7 +79,11 @@ const dummyData: ArbitrageOpportunity[] = [
 
         if (result.status === "success") {
           setData(opportunities);
-          setSliderValue(opportunities.length);
+          if (opportunities.length > 0 && windowLength === 0) {
+            // Default preset (e.g., 'all' time points)
+            setWindowLength(opportunities.length);
+            setWindowStart(0);
+          }  
         } else {
           console.error("API Error:", result.message);
         }
@@ -100,6 +106,16 @@ const dummyData: ArbitrageOpportunity[] = [
       });
     };
 
+    function transformLiveData(rawData: any): ArbitrageOpportunity[] {
+      return rawData.feeds.map((item: any) => ({
+        feed: item.feed_id, // use feed_id from the raw JSON
+        timestamp: new Date(item.timestamp).getTime() / 1000, // convert to Unix timestamp (seconds)
+        price: item.price,
+        liquidity1: 0, // default value
+        liquidity2: 0, // default value
+      }));
+    }
+
     // Fetch live data immediately and then every 3 seconds
   useEffect(() => {
     if (isHistorical) {
@@ -116,31 +132,34 @@ const dummyData: ArbitrageOpportunity[] = [
   }, [isHistorical]);
 
     // In historical mode, show only the last sliderValue entries.
-    const displayedData = isHistorical ? data.slice(-sliderValue) : data;
+    const displayedData = isHistorical ? data.slice(windowStart, windowStart + windowLength) : data;
 
-    // Preset button handler (mapping presets to a number of data points)
+    // Preset button handler: sets the fixed windowLength (number of data points)
     const setPreset = (preset: '1h' | '1d' | '1m' | '6m' | 'all') => {
-      // These numbers are examples. Adjust them based on the granularity of your real data.
-      switch (preset) {
-        case '1h':
-          setSliderValue(3);
-          break;
-        case '1d':
-          setSliderValue(6);
-          break;
-        case '1m':
-          setSliderValue(9);
-          break;
-        case '6m':
-          setSliderValue(13);
-          break;
-        case 'all':
-          setSliderValue(data.length);
-          break;
-        default:
-          setSliderValue(data.length);
-      }
-    };
+    // Example: these numbers represent the number of data points corresponding to each preset.
+    let length = 0;
+    switch (preset) {
+      case '1h':
+        length = 3;
+        break;
+      case '1d':
+        length = 6;
+        break;
+      case '1m':
+        length = 9;
+        break;
+      case '6m':
+        length = 13;
+        break;
+      case 'all':
+        length = data.length;
+        break;
+      default:
+        length = data.length;
+    }
+    setWindowLength(length);
+    setWindowStart(data.length - length > 0 ? data.length - length : 0);
+  };
   
     return (
       <div>
@@ -153,7 +172,7 @@ const dummyData: ArbitrageOpportunity[] = [
             <XAxis dataKey="timestamp" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 2 }} dot={{ r: 2 }} />
+            <Line type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 2 }} dot={{ r: 0.5 }} />
           </LineChart>
         </ResponsiveContainer>
       ) : (
@@ -164,14 +183,14 @@ const dummyData: ArbitrageOpportunity[] = [
         {isHistorical && (
         <div style={{ marginTop: '20px' }}>
           <div>
-            <label htmlFor="slider">Select number of data points: {sliderValue}</label>
+            <label htmlFor="slider">Data window starts at index: {windowStart} (showing {windowLength} points)</label>
             <input
               id="slider"
               type="range"
               min="1"
-              max={data.length}
-              value={sliderValue}
-              onChange={(e) => setSliderValue(Number(e.target.value))}
+              max={data.length - windowLength >= 0 ? data.length - windowLength : 0}
+              value={windowStart}
+              onChange={(e) => setWindowStart(Number(e.target.value))}
               style={{ width: '100%' }}
             />
           </div>
