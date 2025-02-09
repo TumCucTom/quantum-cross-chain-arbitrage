@@ -53,7 +53,6 @@ ABI_JSON_STRING = '''[
     ],"stateMutability":"payable","type":"function"}
 ]'''
 
-# Convert ABI from JSON string to Python list
 ABI = json.loads(ABI_JSON_STRING)
 
 async def main() -> Tuple[List[int], List[int], int]:
@@ -77,7 +76,7 @@ async def main() -> Tuple[List[int], List[int], int]:
     for feed_id in FEED_IDS:
         feeds, decimals, timestamp = await ftsov2.functions.getFeedById(feed_id).call()
 
-        # Print results
+        #results
         print("Feed ID:", feed_id)
         print("Feeds:", feeds)
         print("Decimals:", decimals)

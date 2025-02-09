@@ -8,9 +8,7 @@ from qiskit_optimization.translators import from_docplex_mp
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 from qiskit.primitives import Sampler
 
-# -------------------------
-# Step 1: Define Arbitrage Graph in NetworkX
-# -------------------------
+#Define Arbitrage Graph in NetworkX
 G = nx.DiGraph()
 
 # Example edges (Token A to Token B with arbitrage profit weight)
@@ -27,16 +25,15 @@ weights = np.array([G[u][v]['weight'] for u, v in edge_list])
 # Number of edges
 num_edges = len(edge_list)
 
-# -------------------------
-# Step 2: Define QUBO Problem
-# -------------------------
+#Define QUBO Problem
+
 qubo = QuadraticProgram()
 
 # Add binary variables for each edge
 for i, edge in enumerate(edge_list):
     qubo.binary_var(name=f"x_{i}")
 
-# Objective Function: Maximize arbitrage profit (Minimize negative profit)
+# Maximize arbitrage profit (Minimize negative profit)
 linear_coeffs = -weights  # Negate since QAOA minimizes
 qubo.minimize(linear=linear_coeffs)
 
@@ -55,12 +52,8 @@ for node in G.nodes:
         name=f"flow_{node}"
     )
 
-# Print QUBO formulation
 print("\nQUBO Formulation:\n", qubo.export_as_lp_string())
 
-# -------------------------
-# Step 3: Solve Using QAOA in Qiskit
-# -------------------------
 # Convert QuadraticProgram to Qiskit's QUBO format
 qubo_operator = from_docplex_mp(qubo)
 
@@ -72,9 +65,7 @@ qaoa = QAOA(sampler, optimizer=COBYLA(), reps=2)
 optimizer = MinimumEigenOptimizer(qaoa)
 result = optimizer.solve(qubo_operator)
 
-# -------------------------
-# Step 4: Extract Results
-# -------------------------
+# Results
 print("\nOptimal Arbitrage Cycle (Binary Representation):", result.x)
 print("Optimized Profit:", -result.fval)  # Negate since we minimized
 
@@ -83,12 +74,7 @@ selected_edges = [edge_list[i] for i in range(num_edges) if result.x[i] == 1]
 
 print("\nArbitrage Cycle:", selected_edges)
 
-# -------------------------
-# Step 5: Run on Real Quantum Computer (Optional)
-# -------------------------
-
 # To execute on a real IBM quantum device:
-
 # from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2
 # service = QiskitRuntimeService(channel="ibm_quantum")
 # sampler = SamplerV2(service=service, backend="ibmq_qasm_simulator")

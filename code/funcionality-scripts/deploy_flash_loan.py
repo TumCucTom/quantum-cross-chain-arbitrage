@@ -1,24 +1,37 @@
 # deploy_flash_loan.py
-
+import os
 from ape import accounts, project
 
 def main():
-    """
-    Deploy the Flash Loan Arbitrage contract and execute the flash loan.
-    """
-    deployer = accounts.load("my_account")  # Load your private key
+    """Deploy Flash Loan Arbitrage Contract and execute a flash loan."""
 
-    # Deploy Contract
-    contract = deployer.deploy(project.FlashLoanArbitrage)
-    print(f"✅ Contract Deployed at: {contract.address}")
+    # Load deployer account dynamically
+    account_name = os.getenv("APE_DEPLOYER", "default_account")
+    deployer = accounts.load(account_name)
 
-    # Aave V3 Lending Pool Address
-    aave_pool = "0x7d2768dE32b0b80b7a3454c06BdAc9FbFf95D10D"
+    # Ensure sufficient balance
+    if deployer.balance == 0:
+        raise ValueError("Deployer has insufficient funds to deploy the contract.")
 
-    # DAI as asset for borrowing
-    dai_address = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+    # Deploy the contract
+    try:
+        contract = deployer.deploy(project.FlashLoanArbitrage)
+        print(f"Contract Deployed at: {contract.address}")
+    except Exception as e:
+        print(f"Contract Deployment Failed: {e}")
+        return
 
-    # Execute Flash Loan
-    loan_amount = 10**18  # 1 DAI
-    contract.execute_flash_loan(aave_pool, dai_address, loan_amount, sender=deployer)
-    print("🚀 Flash Loan Executed!")
+    # Configurable lending pool and token
+    aave_pool = os.getenv("AAVE_POOL", "0x7d2768dE32b0b80b7a3454c06BdAc9FbFf95D10D")
+    asset = os.getenv("DAI_ADDRESS", "0x6B175474E89094C44Da98b954EedeAC495271d0F")
+
+    # Borrow amount (10,000 DAI)
+    amount = int(os.getenv("LOAN_AMOUNT", 10_000 * 10**18))  # Default to 10k DAI
+
+    # Execute the Flash Loan with error handling
+    try:
+        tx = contract.flashLoan(aave_pool, asset, amount)
+        tx.wait_for_confirmation()
+        print(f"Flash Loan Executed: {tx.txn_hash}")
+    except Exception as e:
+        print(f"Flash Loan Execution Failed: {e}")
