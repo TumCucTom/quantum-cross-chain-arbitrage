@@ -14,6 +14,9 @@ from qiskit.algorithms.optimizers import COBYLA
 from qiskit_optimization.translators import from_docplex_mp
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 from qiskit.primitives import Sampler
+import time
+from ape import accounts, project
+from web3 import Web3
 
 
 # --- Configuration ---
@@ -277,13 +280,16 @@ result = optimizer.solve(qubo_operator)
 print("\nOptimal Arbitrage Cycle (Binary Representation):", result.x)
 print("Optimized Profit:", -result.fval)  # Negate since we minimized
 
+# need to learn at what point this is profitable
+# if -result.fval > 0:
+
 # Convert binary results to actual arbitrage cycle
 selected_edges = [edge_list[i] for i in range(num_edges) if result.x[i] == 1]
 
 print("\nArbitrage Cycle:", selected_edges)
 
 # -------------------------
-# Step 5: Run on Real Quantum Computer (Optional)
+# Step 5: Run on Real Quantum Computer
 # -------------------------
 
 # To execute on a real IBM quantum device:
@@ -294,3 +300,47 @@ print("\nArbitrage Cycle:", selected_edges)
 # qaoa = QAOA(sampler, optimizer=COBYLA(), reps=3)
 # optimizer = MinimumEigenOptimizer(qaoa)
 # result = optimizer.solve(qubo_operator)
+
+# Load contract and Web3
+deployer = accounts.load("my_account")
+contract = project.FlashLoanArbitrage.at("0xYourDeployedContractAddress")
+
+def execute_flash_loan(trade):
+    """Trigger Flash Loan Execution on-chain."""
+    tokenA, tokenB, amount = trade
+    tx = contract.execute_flash_loan("0xAaveLendingPoolAddress", tokenA, amount, sender=deployer)
+    print(f"🚀 Executed Flash Loan for {amount} {tokenA} to trade with {tokenB}")
+    return tx.txhash
+
+def log_trade(trade, expected_profit, txhash):
+    """Log trade details to a JSON file."""
+    timestamp = time.time()
+    log_entry = {
+        "time": timestamp,
+        "trade": trade,
+        "expected_profit": expected_profit,
+        "txhash": txhash,
+        "actual_profit": None  # Will be updated later
+    }
+
+    with open("trade_log.json", "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
+
+def update_actual_profit(txhash, actual_profit):
+    """Update the log file with the realized profit."""
+    with open("trade_log.json", "r") as f:
+        trades = [json.loads(line) for line in f]
+
+    for trade in trades:
+        if trade["txhash"] == txhash:
+            trade["actual_profit"] = actual_profit
+            break
+
+    with open("trade_log.json", "w") as f:
+        for trade in trades:
+            f.write(json.dumps(trade) + "\n")
+
+
+for trade in selected_edges:
+    txhash = execute_flash_loan(trade)
+    log_trade(trade, -result.fval, txhash)
