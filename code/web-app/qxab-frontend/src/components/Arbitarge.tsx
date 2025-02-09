@@ -41,7 +41,8 @@ export default function ArbitrageTable() {
   // Start arbitrage (POST request)
   const startArbitrage = async () => {
     try {
-      await axios.post('/qaoa-arbitrage');
+      const response = await axios.get('/qaoa-arbitrage');
+      setTrades(response.data);
       setIsArbitrageRunning(true);
       // Optionally refetch trades after starting
       fetchTrades();
