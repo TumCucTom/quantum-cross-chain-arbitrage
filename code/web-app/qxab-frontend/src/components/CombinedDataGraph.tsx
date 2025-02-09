@@ -232,30 +232,46 @@ interface LiveDataGraphProps {
 
         {/* Interactive controls for historical mode */}
         {isHistorical && (
-        <div style={{ marginTop: '20px' }}>
-          <div>
-            <label htmlFor="slider">Data window starts at index: {windowStart} (showing {windowLength} points)</label>
-            <input
-              id="slider"
-              type="range"
-              min="1"
-              max={data.length - windowLength >= 0 ? data.length - windowLength : 0}
-              value={windowStart}
-              onChange={(e) => setWindowStart(Number(e.target.value))}
-              style={{ width: '100%' }}
-            />
-          </div>
-          <div style={{ marginTop: '10px' }}>
-            <button onClick={() => setPreset('1d')}>1 Hour</button>
-            <button onClick={() => setPreset('1m')}>1 Day</button>
-            <button onClick={() => setPreset('6m')}>1 Month</button>
-            <button onClick={() => setPreset('1y')}>6 Months</button>
-            <button onClick={() => setPreset('all')}>All</button>
-          </div>
-        </div>
-      )}
-    </div>
+            <div style={{marginTop: '20px'}}>
+              <div>
+                <label htmlFor="slider">Data window starts at
+                  index: {windowStart} (showing {windowLength} points)</label>
+                <input
+                    id="slider"
+                    type="range"
+                    min="1"
+                    max={data.length - windowLength >= 0 ? data.length - windowLength : 0}
+                    value={windowStart}
+                    onChange={(e) => setWindowStart(Number(e.target.value))}
+                    style={{width: '100%'}}
+                />
+              </div>
+              <div className="mt-2">
+                <button className="bg-white text-black px-4 py-2 rounded-lg shadow-md mr-2"
+                        onClick={() => setPreset('1d')}>
+                  1 Hour
+                </button>
+                <button className="bg-white text-black px-4 py-2 rounded-lg shadow-md mr-2"
+                        onClick={() => setPreset('1m')}>
+                  1 Day
+                </button>
+                <button className="bg-white text-black px-4 py-2 rounded-lg shadow-md mr-2"
+                        onClick={() => setPreset('6m')}>
+                  1 Month
+                </button>
+                <button className="bg-white text-black px-4 py-2 rounded-lg shadow-md mr-2"
+                        onClick={() => setPreset('1y')}>
+                  6 Months
+                </button>
+                <button className="bg-white text-black px-4 py-2 rounded-lg shadow-md" onClick={() => setPreset('all')}>
+                  All
+                </button>
+              </div>
+
+            </div>
+        )}
+      </div>
     );
   };
-  
-  export default LiveDataGraph;
+
+export default LiveDataGraph;
