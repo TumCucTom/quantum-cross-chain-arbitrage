@@ -49,8 +49,7 @@ const CustomHistoric: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      <h2>Arbitrage Opportunities Dashboard</h2>
-      <Link to="/arbitrage">Go to Home Page</Link>
+      <h2>Historic Comparison Dashboard</h2>
       <Grid container spacing={2}>
         {cells.map((cell, index) => (
           <Grid item xs={6} key={index}>

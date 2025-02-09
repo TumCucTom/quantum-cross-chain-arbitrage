@@ -90,7 +90,7 @@ const HomeDashboard: React.FC = () => {
         >
         <h1>Quantum-Enhanced Cross-Chain Arbitrage Bot</h1>
         <h2>Arbitrage Opportunities Dashboard</h2>
-        <Link to="/custom-historic">Go to Home Page</Link>
+        <Link to="/custom-historic">Go to Historic Graphs</Link>
 
         {/* Graphs - Only Display 6 Selected Graphs */}
         <Grid container spacing={2} sx={{ width: '100%', justifyContent: 'center' }}>

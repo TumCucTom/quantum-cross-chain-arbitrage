@@ -106,16 +106,49 @@ interface LiveDataGraphProps {
     };
 
     const transformHistoryData = (data: any): ArbitrageOpportunity[] => {
-      return data.history.map((row: any[]) => {
-        return {
-          feed: row[0],
-          timestamp: new Date(row[4]).getTime() / 1000,
-          price: parseFloat(row[1]) || 0,
-          liquidity1: row[2] !== null ? parseFloat(row[2]) : 0,
-          liquidity2: row[2] !== null ? parseFloat(row[2]) : 0,
-        };
+      // Step 1: Convert raw data into structured objects
+      const formattedData: ArbitrageOpportunity[] = data.history.map((row: any[]): ArbitrageOpportunity => ({
+        feed: row[0], // Token name (e.g., BTC, ETH)
+        timestamp: new Date(row[4]).setHours(0, 0, 0, 0) / 1000, // Convert to start of day (Unix timestamp in seconds)
+        price: parseFloat(row[1]) || 0,
+        liquidity1: row[2] !== null ? parseFloat(row[2]) : 0,
+        liquidity2: row[3] !== null ? parseFloat(row[3]) : 0, // Fix: use row[3] for liquidity2
+      }));
+    
+      // Step 2: Group data by timestamp (day) into a Map
+      const groupedByDay = new Map<number, { [key: string]: number }>();
+    
+      formattedData.forEach(({ feed, timestamp, price }) => {
+        if (!groupedByDay.has(timestamp)) {
+          groupedByDay.set(timestamp, {});
+        }
+        groupedByDay.get(timestamp)![feed] = price; // Store price under token name
       });
+    
+      // Step 3: Compute price ratio when both tokens exist for the same day
+      const computedRatios: ArbitrageOpportunity[] = [];
+      
+      groupedByDay.forEach((prices, timestamp) => {
+        const tokens = Object.keys(prices);
+    
+        if (tokens.length === 2) { // Ensure we have both tokens on the same day
+          const token1 = tokens[0];
+          const token2 = tokens[1];
+          const ratio = prices[token2] !== 0 ? prices[token1] / prices[token2] : 0;
+    
+          computedRatios.push({
+            feed: `${token1}/${token2}`,
+            timestamp,
+            price: ratio,
+            liquidity1: 0,
+            liquidity2: 0,
+          });
+        }
+      });
+    
+      return computedRatios;
     };
+    
 
     function transformLiveData(rawData: any): ArbitrageOpportunity[] {
       return rawData.feeds.map((item: any) => ({
@@ -146,21 +179,21 @@ interface LiveDataGraphProps {
     const displayedData = isHistorical ? data.slice(windowStart, windowStart + windowLength) : data;
 
     // Preset button handler: sets the fixed windowLength (number of data points)
-    const setPreset = (preset: '1h' | '1d' | '1m' | '6m' | 'all') => {
+    const setPreset = (preset: '1d' | '1m' | '6m' | '1y' | 'all') => {
     // Example: these numbers represent the number of data points corresponding to each preset.
     let length = 0;
     switch (preset) {
-      case '1h':
-        length = 3;
-        break;
       case '1d':
-        length = 6;
+        length = 1;
         break;
       case '1m':
-        length = 9;
+        length = 30;
         break;
       case '6m':
-        length = 13;
+        length = 30*6;
+        break;
+      case '1y':
+        length = 365;
         break;
       case 'all':
         length = data.length;
@@ -181,19 +214,14 @@ interface LiveDataGraphProps {
           <LineChart data={displayedData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="timestamp"   
-            domain={['auto', 'auto']}
-            tickFormatter={(val) => {
-              // `val` is a Unix timestamp in seconds
-              const date = new Date(val * 1000);
-              // Show hours, minutes, and seconds in 24-hour format
-              return date.toLocaleTimeString([], {
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-              });
-            }}/>
-            <YAxis />
+              type="number"
+              domain={['auto', 'auto']}
+              tickFormatter={(val) => {
+                // val is your Unix timestamp in seconds.
+                const date = new Date(val * 1000); // multiply by 1000 if val is in seconds
+                return date.toLocaleString();      // or toLocaleTimeString(), etc.
+              }}/>
+            <YAxis domain={['auto', 'auto']}/>
             <Tooltip />
             <Line type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 2 }} dot={{ r: 0.5 }} />
           </LineChart>
@@ -218,10 +246,10 @@ interface LiveDataGraphProps {
             />
           </div>
           <div style={{ marginTop: '10px' }}>
-            <button onClick={() => setPreset('1h')}>1 Hour</button>
-            <button onClick={() => setPreset('1d')}>1 Day</button>
-            <button onClick={() => setPreset('1m')}>1 Month</button>
-            <button onClick={() => setPreset('6m')}>6 Months</button>
+            <button onClick={() => setPreset('1d')}>1 Hour</button>
+            <button onClick={() => setPreset('1m')}>1 Day</button>
+            <button onClick={() => setPreset('6m')}>1 Month</button>
+            <button onClick={() => setPreset('1y')}>6 Months</button>
             <button onClick={() => setPreset('all')}>All</button>
           </div>
         </div>

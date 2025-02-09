@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -82,7 +83,7 @@ export default function ArbitrageTable() {
   }, []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', padding: '16px' }}>
+    <div style={{ width: '100vw', height: '90vh', padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {/* Buttons for starting/stopping arbitrage */}
       <div style={{ marginBottom: '16px' }}>
         <Button

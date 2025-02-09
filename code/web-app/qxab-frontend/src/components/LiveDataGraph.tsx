@@ -144,6 +144,19 @@ interface LiveDataGraphProps {
     // In historical mode, show only the last sliderValue entries.
     const displayedData = isHistorical ? data.slice(windowStart, windowStart + windowLength) : data;
 
+    let lineColor = "#8884d8"; // Default Grey
+
+    if (displayedData.length > 1) {
+      const lastPoint = displayedData[0].price; // 10th point from the end
+      const latestPoint = displayedData[displayedData.length - 1].price; // Most recent point
+
+      if (latestPoint > lastPoint) {
+          lineColor = "#00C853"; // Green for increasing trend
+      } else if (latestPoint < lastPoint) {
+          lineColor = "#D32F2F"; // Red for decreasing trend
+      }
+  }
+
     // Preset button handler: sets the fixed windowLength (number of data points)
     const setPreset = (preset: '1h' | '1d' | '1m' | '6m' | 'all') => {
     // Example: these numbers represent the number of data points corresponding to each preset.
@@ -180,21 +193,15 @@ interface LiveDataGraphProps {
           <LineChart data={displayedData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="timestamp"   
-            domain={['auto', 'auto']}
-            tickFormatter={(val) => {
-              // `val` is a Unix timestamp in seconds
-              const date = new Date(val * 1000);
-              // Show hours, minutes, and seconds in 24-hour format
-              return date.toLocaleTimeString([], {
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-              });
-            }}/>
-            <YAxis />
+              domain={[0, 'auto']}
+              tickFormatter={(val) => {
+                // val is your Unix timestamp in seconds.
+                const date = new Date(val * 1000); // multiply by 1000 if val is in seconds
+                return date.toLocaleString();      // or toLocaleTimeString(), etc.
+              }}/>
+            <YAxis domain={['auto', 'auto']} />
             <Tooltip />
-            <Line type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 2 }} dot={{ r: 0.5 }} />
+            <Line type="monotone" dataKey="price" stroke={lineColor} activeDot={{ r: 2 }} dot={{ r: 0.5 }} />
           </LineChart>
         </ResponsiveContainer>
       ) : (
