@@ -3,7 +3,7 @@
 Built by [Tom](https://www.linkedin.com/in/thomas-bale-5863542a4/), [Dhillon](https://www.linkedin.com/in/dhillon-thurairatnam/), and [Ella](github.com/cowboyella) - Team EthumBards for the ETH Oxford Hackathon  
 
 ## Overview  
-**Quantum-Enhanced Cross-Chain Arbitrage Bot (QXAB)** is an innovative arbitrage system that leverages **Quantum Optimization (QAOA)** and **Flare’s blockchain protocols** to execute high-speed, secure, and profitable arbitrage trades across multiple decentralized finance (DeFi) ecosystems.  
+**Quantum-Enhanced Cross-Chain Arbitrage Bot (QXAB)** is an innovative arbitrage system that leverages **Quantum Optimization (QAOA)** and **Flare’s blockchain protocols** to execute high-speed, secure, and profitable arbitrage trades across multiple decentralized finance (DeFi) ecosystems with **Vyper** contracts.  
 
 ### Key Features  
 - **Quantum Speed Boost** – Uses Quantum Approximate Optimization Algorithm (QAOA) for rapid arbitrage path discovery.  
@@ -14,49 +14,28 @@ Built by [Tom](https://www.linkedin.com/in/thomas-bale-5863542a4/), [Dhillon](ht
 
 ---
 
-## Technical Implementation  
+## Architecture Diagram
 
-### 1. Data Collection via Flare’s FTSO (External Data Source)  
-- Fetch **real-time cross-chain price feeds** for ETH, USDT, BTC, etc.  
-- Uses Flare’s **decentralized oracle network** to avoid price manipulation.  
-
-### 2. Quantum Arbitrage Path Optimization (QAOA via Qiskit)  
-- Encode arbitrage opportunities into a **Quantum Circuit**.  
-- Use **Quantum Approximate Optimization Algorithm (QAOA)** to identify the **most profitable paths**.  
-- Optimize swap routing to **minimize gas fees and slippage**.  
-
-### 3. Execution with Flare’s State Connector (Cross-Chain Trade Validation)  
-- Validates blockchain states before executing transactions.  
-- Ensures that funds are available and cross-chain swaps execute **atomically**.  
-
-### 4. Flash Loan and Swap Execution  
-- Executes flash loans on **Aave, Uniswap, Curve, or Flare-based lending pools**.  
-- Swaps assets on **Ethereum, Binance Smart Chain (BSC), Solana, and Flare**.  
-- Repays flash loan **instantly with profit**.  
+![](images/arch.png)
 
 ---
 
 ## Installation & Setup  
 
-### Prerequisites  
-- Python 3.9+  
-- Qiskit (Quantum Computing Framework)  
-- Solidity (Smart Contract Development)  
-- Node.js for interacting with blockchain APIs  
-
-### Clone the Repository  
-```bash
-git clone https://github.com/yourusername/qxab-flare.git
-cd qxab-flare
+### Backend
+```
+cd code/web-app
+brew install docker
+brew install docker-compose
+docker compose up --build
 ```
 
-### Install Dependencies  
-```bash
-pip install qiskit web3 requests
-npm install ethers hardhat
+### Frontend
 ```
-
-# To DO
+cd code/web-app/qxab-frontend
+npm i
+npm run dev
+```
 
 ---
 
