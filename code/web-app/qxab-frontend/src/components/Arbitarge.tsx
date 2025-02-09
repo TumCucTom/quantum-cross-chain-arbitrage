@@ -13,12 +13,14 @@ import {
 } from '@mui/material';
 
 type Trade = {
-  id: number;
+  trade_batch: number;
   time_of_trade: string;
+  token_from_trade: string;
+  token_to_trade: string;
+  amount: number;
   expected_reward: number;
-  actual_profit: number;
-  number_of_trades: number;
-  time_between_trades: string;
+  txhash: string;
+  cross_chain_state_validated: boolean;
 };
 
 export default function ArbitrageTable() {
@@ -39,7 +41,7 @@ export default function ArbitrageTable() {
   // Start arbitrage (POST request)
   const startArbitrage = async () => {
     try {
-      await axios.post('/api/arbitrage/start');
+      await axios.post('/qaoa-arbitrage');
       setIsArbitrageRunning(true);
       // Optionally refetch trades after starting
       fetchTrades();
@@ -64,21 +66,25 @@ export default function ArbitrageTable() {
     // Mock data or real fetch
     setTrades([
       {
-        id: 1,
+        trade_batch: 1,
         time_of_trade: '2025-02-09T12:00:00Z',
+        token_from_trade: 'BTC',
+        token_to_trade: 'ETH',
+        amount: 0.003,
         expected_reward: 100,
-        actual_profit: 90,
-        number_of_trades: 5,
-        time_between_trades: '10s'
+        txhash: "0x123456789abcdef0",
+        cross_chain_state_validated: true,
       },
       {
-        id: 2,
-        time_of_trade: '2025-02-09T12:05:00Z',
-        expected_reward: 120,
-        actual_profit: 110,
-        number_of_trades: 6,
-        time_between_trades: '15s'
-      }
+        trade_batch: 1,
+        time_of_trade: '2025-02-09T12:00:03Z',
+        token_from_trade: 'ETH',
+        token_to_trade: 'BCH',
+        amount: 0.002,
+        expected_reward: 100,
+        txhash: "0x123456789abcdef1",
+        cross_chain_state_validated: true,
+      },
     ]);
   }, []);
 
@@ -110,21 +116,27 @@ export default function ArbitrageTable() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
+              <TableCell>Trade Batch</TableCell>
               <TableCell>Time of Trade</TableCell>
-              <TableCell>Expected Reward</TableCell>
-              <TableCell>Actual Profit</TableCell>
-              <TableCell>No. of Trades</TableCell>
-              <TableCell>Time Between Trades</TableCell>
+              <TableCell>Token From</TableCell>
+              <TableCell>Token To</TableCell>
+              <TableCell>Amount</TableCell>
+              <TableCell>Total Expected Reward</TableCell>
+              <TableCell>Transaction Hash</TableCell>
+              <TableCell>Cross Chain State Validated?</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {trades.map((trade, index) => (
-              <TableRow key={trade.id || index}>
+              <TableRow>
+                <TableCell>{trade.trade_batch}</TableCell>
                 <TableCell>{trade.time_of_trade}</TableCell>
+                <TableCell>{trade.token_from_trade}</TableCell>
+                <TableCell>{trade.token_to_trade}</TableCell>
+                <TableCell>{trade.amount}</TableCell>
                 <TableCell>{trade.expected_reward}</TableCell>
-                <TableCell>{trade.actual_profit}</TableCell>
-                <TableCell>{trade.number_of_trades}</TableCell>
-                <TableCell>{trade.time_between_trades}</TableCell>
+                <TableCell>{trade.txhash}</TableCell>
+                <TableCell>{trade.cross_chain_state_validated ? "Yes" : "No"}</TableCell>
               </TableRow>
             ))}
           </TableBody>

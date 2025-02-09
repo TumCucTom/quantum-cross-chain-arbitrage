@@ -8,6 +8,8 @@ import json
 import csv
 import time
 import logging
+import qaoa_arbitrage_test as qaoa_arbitrage
+#import qaoa_arbitrage
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -116,51 +118,6 @@ def fetch_ftso_live_prices():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route("/live-data")
-def fetch_and_store_live_data():
-    """
-    Calls an external Python script (`fetch_live_data.py`) to get:
-    - Live price
-    - Liquidity from Uniswap & Curve
-    - Timestamp
-    Stores data in MySQL & returns it to the frontend.
-    """
-    try:
-        # ✅ Call the external script
-        result = subprocess.run(["python", "fetch_live_data.py"], capture_output=True, text=True)
-
-        if result.returncode != 0:
-            logger.error(f"❌ Error in fetch_live_data.py: {result.stderr}")
-            raise Exception(f"Error in fetch_live_data.py: {result.stderr}")
-
-        # ✅ Parse JSON output from script
-        live_data = json.loads(result.stdout)
-
-        # ✅ Store the fetched data in the database
-        cur = conn.cursor()
-
-        for symbol, data in live_data.items():
-            price = data["price"]
-            uniswap_liquidity = data.get("uniswap_liquidity", None)
-            curve_liquidity = data.get("curve_liquidity", None)
-            timestamp = data["timestamp"]
-
-            cur.execute("""
-                INSERT INTO market_data (symbol, price, uniswap_liquidity, curve_liquidity, timestamp)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (symbol, price, uniswap_liquidity, curve_liquidity, timestamp))
-
-        conn.commit()
-        cur.close()
-        logger.info(f"✅ Live data stored successfully for {len(live_data)} symbols.")
-
-        # ✅ Return live data to the frontend
-        return jsonify({"status": "success", "live_data": live_data})
-
-    except Exception as e:
-        logger.error(f"❌ Error fetching live data: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)})
-
 @app.route("/historical-data")
 def get_historical_data():
     """
@@ -190,6 +147,14 @@ def get_historical_data():
 
     except Exception as e:
         logger.error(f"❌ Error fetching historical data: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)})
+
+@app.route("/qaoa-arbitrage")
+def get_qaoa_arbitrage():
+    try:
+        return jsonify({"status": "success", "log": qaoa_arbitrage.execute_trades()})
+    except Exception as e:
+        logger.error(f"Error executing QAOA arbitrage: {str(e)}")
         return jsonify({"status": "error", "message": str(e)})
 
 @app.route("/history/<symbol>")
