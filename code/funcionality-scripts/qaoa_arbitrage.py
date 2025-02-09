@@ -312,19 +312,23 @@ def execute_flash_loan(trade):
     print(f"🚀 Executed Flash Loan for {amount} {tokenA} to trade with {tokenB}")
     return tx.txhash
 
-def log_trade(trade, expected_profit, txhash):
-    """Log trade details to a JSON file."""
+def log_trade(trade, expected_profit, txhash, cross_chain_state_validated):
+    """
+    Log trade details to a JSON file, including Flare’s state validation result.
+    """
     timestamp = time.time()
     log_entry = {
         "time": timestamp,
         "trade": trade,
         "expected_profit": expected_profit,
         "txhash": txhash,
+        "cross_chain_state_validated": cross_chain_state_validated,
         "actual_profit": None  # Will be updated later
     }
 
     with open("trade_log.json", "a") as f:
         f.write(json.dumps(log_entry) + "\n")
+
 
 def update_actual_profit(txhash, actual_profit):
     """Update the log file with the realized profit."""
@@ -344,3 +348,10 @@ def update_actual_profit(txhash, actual_profit):
 for trade in selected_edges:
     txhash = execute_flash_loan(trade)
     log_trade(trade, -result.fval, txhash)
+
+def check_realized_profit(txhash, timestamp):
+    """Fetch realized profit from the smart contract."""
+    profit = contract.get_trade_profit(timestamp)
+    update_actual_profit(txhash, profit)
+    print(f"✅ Trade {txhash} realized profit: {profit}")
+
