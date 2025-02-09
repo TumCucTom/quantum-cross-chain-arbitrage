@@ -110,8 +110,7 @@ def fetch_ftso_live_prices():
         if result.returncode != 0:
             return jsonify({"status": "error", "message": result.stderr}), 500
 
-        live_data = json.loads(result.stdout)
-        return jsonify({"status": "success", "data": live_data})
+        return jsonify({"status": "success", "data": result.stdout})
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

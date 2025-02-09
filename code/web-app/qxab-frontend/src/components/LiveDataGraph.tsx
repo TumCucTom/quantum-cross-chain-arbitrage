@@ -25,10 +25,19 @@ interface LiveDataGraphProps {
   const LiveDataGraph: React.FC<LiveDataGraphProps> = ({ currency, isHistorical }) => {
     const [data, setData] = useState<ArbitrageOpportunity[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [sliderValue, setSliderValue] = useState<number>(0);
 
     const [windowLength, setWindowLength] = useState<number>(0);
     const [windowStart, setWindowStart] = useState<number>(0);
+
+    function extractJsonFromString(str: string): any {
+      const firstBrace = str.indexOf('{');
+      const lastBrace = str.lastIndexOf('}');
+      if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+        throw new Error("No valid JSON found in the response string.");
+      }
+      const jsonString = str.substring(firstBrace, lastBrace + 1);
+      return JSON.parse(jsonString);
+    }
   
     const fetchLiveData = async () => {
       setLoading(true);
@@ -45,10 +54,11 @@ interface LiveDataGraphProps {
           throw new Error(`Failed to fetch live data: ${response.statusText}`);
         }
         const result = await response.json();
-        const opportunities: ArbitrageOpportunity[] = transformLiveData(result);
+        const extracted = extractJsonFromString(result.data);
+        const opportunities: ArbitrageOpportunity[] = transformLiveData(extracted);
         if (result.status === "success") {
           // Assuming result.data is an array of ArbitrageOpportunity objects:
-          setData(opportunities);
+          setData((prevData) => [...prevData, ...opportunities].slice(-10));
         } else {
           console.error("API Error:", result.message);
         }
