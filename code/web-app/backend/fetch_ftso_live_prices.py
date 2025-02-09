@@ -5,6 +5,8 @@ import certifi
 from datetime import datetime
 from web3 import AsyncHTTPProvider, AsyncWeb3
 from typing import List, Dict
+import sys
+
 
 # FtsoV2 address (Flare Testnet Coston2)
 FTSOV2_ADDRESS = "0x3d893C53D9e8056135C26C8c638B76C8b60Df726"
@@ -85,6 +87,18 @@ async def fetch_feed_data(symbols: List[str]) -> Dict[str, List[Dict[str, str]]]
     return {"feeds": results}
 
 if __name__ == "__main__":
-    symbols_to_fetch = ["BTC", "ETH", "FLR"]  # Example usage
-    data = asyncio.run(fetch_feed_data(symbols_to_fetch))
+    # Check if symbols were provided as a command-line argument
+    print(sys.argv)
+    if len(sys.argv) > 1:
+        try:
+            symbols = json.loads(sys.argv[1])
+            if not isinstance(symbols, list):
+                raise ValueError("Symbols must be a list.")
+        except Exception as e:
+            print(f"Error parsing symbols: {e}")
+            sys.exit(1)
+    else:
+        symbols = []  # or set a default list of symbols
+
+    data = asyncio.run(fetch_feed_data(symbols))
     print(json.dumps(data, indent=4))

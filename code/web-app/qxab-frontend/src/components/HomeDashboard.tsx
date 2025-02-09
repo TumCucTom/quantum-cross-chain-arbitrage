@@ -8,14 +8,11 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 
 
 const buttonNames = [
-    "BTC", "ETH", "SOL", "ADA", "XRP", "LTC", "DOT", "DOGE",
-    "AVAX", "MATIC", "BNB", "UNI", "LINK", "XLM", "ATOM", "FTM",
-    "NEAR", "ALGO", "TRX", "FIL", "VET", "ETC", "EOS", "HNT",
-    "XTZ", "AAVE", "MKR", "SNX", "CRV", "COMP", "GRT", "SAND",
-    "MANA", "AXS", "FTT", "THETA", "CHZ", "ENJ", "ZIL", "KSM",
-    "GALA", "ONE", "RUNE", "BCH", "HBAR", "XMR", "ICP", "WAVES",
-    "EGLD", "DASH", "YFI", "ZEC", "OMG", "QTUM", "BAT", "DGB"
-];
+    "AAVE", "ADA", "ALGO", "APT", "ARB", "ATOM", "AVAX", "BCH",
+    "BNB", "BTC", "DOGE", "DOT", "ETC", "ETH", "FIL", "FLR",
+    "FTM", "HBAR", "ICP", "LINK", "LTC", "NEAR", "QNT", "SHIB",
+    "SOL", "UNI", "USDC", "USDT", "XLM", "XRP"
+  ];
 
 const drawerWidth = 300;
 
@@ -79,8 +76,8 @@ const ArbitrageDashboard: React.FC = () => {
         </Grid>
       </Drawer>
 
-            {/* Main Content Area */}
-            <Box 
+        {/* Main Content Area */}
+        <Box 
         component="main"
         sx={{ 
           flexGrow: 1, 
@@ -89,7 +86,7 @@ const ArbitrageDashboard: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center'
         }}
-      >
+        >
         <h1>Quantum-Enhanced Cross-Chain Arbitrage Bot</h1>
         <h2>Arbitrage Opportunities Dashboard</h2>
 
@@ -97,9 +94,9 @@ const ArbitrageDashboard: React.FC = () => {
         <Grid container spacing={2} sx={{ width: '100%', justifyContent: 'center' }}>
           {selectedCurrencies.map((currency, index) => (
             <Grid item xs={12} sm={6} md={4} key={index}>
-              <Paper sx={{ p: 2, textAlign: 'center', minHeight: 250, position: 'relative' }}>
+              <Paper sx={{ p: 2, textAlign: 'center', minHeight: 250, position: 'relative', minWidth: '300px' }}>
                 {/* Fullscreen Button (Top Right) */}
-                <IconButton 
+                <IconButton
                   onClick={() => handleOpenFullScreen(currency)} 
                   sx={{ position: 'absolute', top: 8, right: 8 }}
                 >

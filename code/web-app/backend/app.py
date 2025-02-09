@@ -103,13 +103,14 @@ def fetch_ftso_live_prices():
     """
     try:
         symbols = request.json.get("symbols", [])
+        symbols = [s[:-4] if isinstance(s, str) and s.endswith("USDT") else s for s in symbols]
+        logging.info(f"Symbols: {symbols}")
         result = subprocess.run(["python", "fetch_ftso_live_prices.py", json.dumps(symbols)], capture_output=True, text=True)
 
         if result.returncode != 0:
             return jsonify({"status": "error", "message": result.stderr}), 500
 
-        live_data = json.loads(result.stdout)
-        return jsonify({"status": "success", "data": live_data})
+        return jsonify({"status": "success", "data": result.stdout})
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

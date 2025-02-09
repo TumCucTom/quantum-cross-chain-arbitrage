@@ -1,5 +1,5 @@
 import './App.css'
-import ArbitrageDashboard from './components/HomeDashboard';
+import ArbitrageTable from './components/Arbitarge';
 
 
 function App() {
@@ -8,7 +8,7 @@ function App() {
     <>
       <div className="App">
       <main>
-        <ArbitrageDashboard />
+        <ArbitrageTable />
       </main>
     </div>
     </>
