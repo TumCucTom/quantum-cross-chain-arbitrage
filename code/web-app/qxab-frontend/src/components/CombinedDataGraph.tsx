@@ -23,7 +23,7 @@ interface LiveDataGraphProps {
   isHistorical: boolean;
 }
   
-  const LiveDataGraph: React.FC<LiveDataGraphProps> = ({ currency1, currency2, isHistorical }) => {
+  const CombinedDataGraph: React.FC<LiveDataGraphProps> = ({ currency1, currency2, isHistorical }) => {
     const [data1, setData1] = useState<ArbitrageOpportunity[]>([]);
     const [data2, setData2] = useState<ArbitrageOpportunity[]>([]);
     const [combinedData, setCombinedData] = useState<ArbitrageOpportunity[]>([]);
@@ -251,4 +251,4 @@ interface LiveDataGraphProps {
     );
   };
   
-  export default LiveDataGraph;
+  export default CombinedDataGraph;

@@ -6,6 +6,7 @@ import { IconButton, Paper, Box, Dialog, DialogTitle, DialogContent, Button } fr
 import AddIcon from '@mui/icons-material/Add';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import { Link } from "react-router-dom";
 
 interface CellState {
   text1: string;
@@ -13,7 +14,7 @@ interface CellState {
   showGraph: boolean;
 }
 
-const ArbitrageDashboard: React.FC = () => {
+const CustomHistoric: React.FC = () => {
   const [cells, setCells] = useState<CellState[]>(
     Array.from({ length: 4 }, () => ({ text1: '', text2: '', showGraph: false }))
   );
@@ -49,6 +50,7 @@ const ArbitrageDashboard: React.FC = () => {
   return (
     <div className="dashboard-container">
       <h2>Arbitrage Opportunities Dashboard</h2>
+      <Link to="/arbitrage">Go to Home Page</Link>
       <Grid container spacing={2}>
         {cells.map((cell, index) => (
           <Grid item xs={6} key={index}>
@@ -104,4 +106,4 @@ const ArbitrageDashboard: React.FC = () => {
   );
 };
 
-export default ArbitrageDashboard;
+export default CustomHistoric;

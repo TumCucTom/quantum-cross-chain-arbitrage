@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import LiveDataGraph from './LiveDataGraph';
 import Grid from '@mui/material/Grid';
 import Drawer from '@mui/material/Drawer';
-import { IconButton, Paper, Button, Box, Dialog, DialogTitle, DialogContent } from '@mui/material';
+import { IconButton, Paper, Button, Box, Dialog, DialogTitle, DialogContent, AppBar, Toolbar } from '@mui/material';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import { Link } from "react-router-dom";
 
 
 const buttonNames = [
@@ -16,7 +17,7 @@ const buttonNames = [
 
 const drawerWidth = 300;
 
-const ArbitrageDashboard: React.FC = () => {
+const HomeDashboard: React.FC = () => {
   // State to store the selected currencies (max 6)
   const [selectedCurrencies, setSelectedCurrencies] = useState<string[]>([]);
   const [fullScreenOpen, setFullScreenOpen] = useState<boolean>(false);
@@ -89,6 +90,7 @@ const ArbitrageDashboard: React.FC = () => {
         >
         <h1>Quantum-Enhanced Cross-Chain Arbitrage Bot</h1>
         <h2>Arbitrage Opportunities Dashboard</h2>
+        <Link to="/custom-historic">Go to Home Page</Link>
 
         {/* Graphs - Only Display 6 Selected Graphs */}
         <Grid container spacing={2} sx={{ width: '100%', justifyContent: 'center' }}>
@@ -130,4 +132,4 @@ const ArbitrageDashboard: React.FC = () => {
   );
 };
 
-export default ArbitrageDashboard;
+export default HomeDashboard;
