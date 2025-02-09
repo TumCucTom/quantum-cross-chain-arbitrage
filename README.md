@@ -1,4 +1,4 @@
-# 🏆$5000 winners - ETH Oxford DeFi hackathon prize🏆
+# 🏆Winners - ETH Oxford DeFi hackathon prize ($5000)🏆
 
 ---------------------
 
