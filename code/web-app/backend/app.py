@@ -8,6 +8,8 @@ import json
 import csv
 import time
 import logging
+import qaoa_arbitrage_test as qaoa_arbitrage
+#import qaoa_arbitrage
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -145,6 +147,14 @@ def get_historical_data():
 
     except Exception as e:
         logger.error(f"❌ Error fetching historical data: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)})
+
+@app.route("/qaoa-arbitrage")
+def get_qaoa_arbitrage():
+    try:
+        return jsonify({"status": "success", "log": qaoa_arbitrage.execute_trades()})
+    except Exception as e:
+        logger.error(f"Error executing QAOA arbitrage: {str(e)}")
         return jsonify({"status": "error", "message": str(e)})
 
 @app.route("/history/<symbol>")

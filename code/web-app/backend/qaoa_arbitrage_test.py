@@ -8,7 +8,6 @@ from web3 import AsyncHTTPProvider, AsyncWeb3, Web3
 import requests
 import numpy as np
 from qiskit_optimization import QuadraticProgram
-from qiskit import Aer
 from qiskit.algorithms import QAOA
 from qiskit.algorithms.optimizers import COBYLA
 from qiskit_optimization.translators import from_docplex_mp
@@ -17,6 +16,7 @@ from qiskit.primitives import Sampler
 import time
 from ape import accounts, project
 from web3 import Web3
+import random
 
 def run_qaoa():
 
@@ -155,14 +155,51 @@ def run_qaoa():
 
 
     async def fetch_reserves(tokenA, tokenB, web3):
-        """Fetch reserves from Uniswap V2 Pair Contract."""
+        """Fetch real-time liquidity reserves from Uniswap V2 Pair Contract."""
         try:
-            pair_contract = web3.eth.contract(address=Web3.to_checksum_address(TOKEN_ADDRESSES[tokenA]), abi=[])
+            uniswap_router = web3.eth.contract(address=Web3.to_checksum_address(UNISWAP_V2_ROUTER), abi=UNISWAP_V2_ABI)
+            pair_address = await uniswap_router.functions.getPair(
+                Web3.to_checksum_address(TOKEN_ADDRESSES[tokenA]),
+                Web3.to_checksum_address(TOKEN_ADDRESSES[tokenB])
+            ).call()
+
+            if pair_address == "0x0000000000000000000000000000000000000000":
+                print(f"⚠️ No liquidity pool found for {tokenA}/{tokenB}")
+                return None
+
+            pair_contract = web3.eth.contract(address=pair_address, abi=UNISWAP_V2_PAIR_ABI)
             reserves = await pair_contract.functions.getReserves().call()
-            return reserves
+            return reserves  # (reserve0, reserve1)
+
         except Exception as e:
             print(f"❌ Error fetching reserves for {tokenA}-{tokenB}: {str(e)}")
             return None
+
+    async def fetch_curve_liquidity(pool_address, token_index, web3):
+        """Fetch real-time liquidity for a token in Curve pools."""
+        curve_abi = '[{"constant":true,"inputs":[{"name":"index","type":"uint256"}],"name":"balances","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"}]'
+        curve_contract = web3.eth.contract(address=pool_address, abi=json.loads(curve_abi))
+
+        try:
+            reserve = await curve_contract.functions.balances(token_index).call()
+            return reserve
+        except Exception as e:
+            print(f"❌ Error fetching Curve liquidity: {e}")
+            return None
+
+
+    async def fetch_balancer_liquidity(pool_address, token, web3):
+        """Fetch real-time liquidity from Balancer Pools."""
+        balancer_abi = '[{"constant":true,"inputs":[{"name":"token","type":"address"}],"name":"getBalance","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"}]'
+        balancer_contract = web3.eth.contract(address=pool_address, abi=json.loads(balancer_abi))
+
+        try:
+            reserve = await balancer_contract.functions.getBalance(Web3.to_checksum_address(token)).call()
+            return reserve
+        except Exception as e:
+            print(f"❌ Error fetching Balancer liquidity: {e}")
+            return None
+
 
 
     async def build_arbitrage_graph(prices, web3):
@@ -320,9 +357,21 @@ def execute_trades(selected_edges, expected_profits):
     def execute_flash_loan(trade):
         """Trigger Flash Loan Execution on-chain."""
         tokenA, tokenB, amount = trade
-        tx = contract.execute_flash_loan("0xAaveLendingPoolAddress", tokenA, amount, sender=deployer)
+
+        #tx = contract.execute_flash_loan("0xAaveLendingPoolAddress", tokenA, amount, sender=deployer)
+
+        def execute_flash_loan(trade):
+            """Simulate Flash Loan Execution with a Fake Tx Hash."""
+            tokenA, tokenB, amount = trade
+            fake_txhash = f"0x{random.randint(10**15, 10**18):x}"  # Generate a random fake tx hash
+            print(f"🔹 Simulated Flash Loan for {amount} {tokenA} to trade with {tokenB} | TxHash: {fake_txhash}")
+            return fake_txhash
+
+        txHash = execute_flash_loan(trade)  # Execute Flash Loan or simulate with a fake tx hash
+
         print(f"🚀 Executed Flash Loan for {amount} {tokenA} to trade with {tokenB}")
-        return tx.txhash
+        return txHash
+        #return tx.txhash
 
     def log_trade(trade, expected_profit, txhash, cross_chain_state_validated):
         """

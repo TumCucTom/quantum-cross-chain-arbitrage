@@ -9,3 +9,11 @@ pymysql
 flask
 mysql-connector-python
 flask-cors
+networkx
+matplotlib
+qiskit
+pennylane
+networkx
+numpy
+qiskit-algorithms
+qiskit-aer
