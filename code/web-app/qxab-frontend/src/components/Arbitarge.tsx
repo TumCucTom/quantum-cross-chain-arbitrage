@@ -27,25 +27,15 @@ export default function ArbitrageTable() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [isArbitrageRunning, setIsArbitrageRunning] = useState(false);
 
-  // Fetch the trades from the backend
-  const fetchTrades = async () => {
-    try {
-      // Replace with your endpoint
-      const response = await axios.get('/api/trades');
-      setTrades(response.data);
-    } catch (error) {
-      console.error('Error fetching trades:', error);
-    }
-  };
-
   // Start arbitrage (POST request)
   const startArbitrage = async () => {
     try {
-      const response = await axios.get('/qaoa-arbitrage');
+      const response = await axios.get('http://localhost:5002/qaoa-arbitrage');
+      console.log('Arbitrage started:', response.data);
       setTrades(response.data);
       setIsArbitrageRunning(true);
       // Optionally refetch trades after starting
-      fetchTrades();
+      // startArbitrage()
     } catch (error) {
       console.error('Error starting arbitrage:', error);
     }
@@ -57,7 +47,6 @@ export default function ArbitrageTable() {
       await axios.post('/api/arbitrage/stop');
       setIsArbitrageRunning(false);
       // Optionally refetch trades after stopping
-      fetchTrades();
     } catch (error) {
       console.error('Error stopping arbitrage:', error);
     }
