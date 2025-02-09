@@ -23,54 +23,58 @@ interface LiveDataGraphProps {
   isHistorical: boolean;
 }
   
-  const CombinedDataGraph: React.FC<LiveDataGraphProps> = ({ currency1, currency2, isHistorical }) => {
-    const [data1, setData1] = useState<ArbitrageOpportunity[]>([]);
-    const [data2, setData2] = useState<ArbitrageOpportunity[]>([]);
-    const [combinedData, setCombinedData] = useState<ArbitrageOpportunity[]>([]);
+  const LiveDataGraph: React.FC<LiveDataGraphProps> = ({ currency1, currency2, isHistorical }) => {
+    const [data, setData] = useState<ArbitrageOpportunity[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
 
     const [windowLength, setWindowLength] = useState<number>(0);
     const [windowStart, setWindowStart] = useState<number>(0);
-    
-    // Function to simulate fetching historical data
-    const fetchHistoricalData1 = async () => {
+
+    function extractJsonFromString(str: string): any {
+      const firstBrace = str.indexOf('{');
+      const lastBrace = str.lastIndexOf('}');
+      if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+        throw new Error("No valid JSON found in the response string.");
+      }
+      const jsonString = str.substring(firstBrace, lastBrace + 1);
+      return JSON.parse(jsonString);
+    }
+  
+    const fetchLiveData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:5002/history/${currency1+'USDT'}`, {
-          method: "GET",
+        const response = await fetch("http://localhost:5002/ftso-live-prices", {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          mode: "cors",  // Enable CORS mode
+          // Send the current currency as a single-element array.
+          body: JSON.stringify({ symbols: [currency1, currency2] }),
         });
-
         if (!response.ok) {
-          throw new Error(`Failed to fetch historical data: ${response.statusText}`);
+          throw new Error(`Failed to fetch live data: ${response.statusText}`);
         }
         const result = await response.json();
-        const opportunities: ArbitrageOpportunity[] = transformHistoryData(result);
-
+        const extracted = extractJsonFromString(result.data);
+        const opportunities: ArbitrageOpportunity[] = transformLiveData(extracted);
         if (result.status === "success") {
-          setData1(opportunities);
-          if (opportunities.length > 0 && windowLength === 0) {
-            // Default preset (e.g., 'all' time points)
-            setWindowLength(opportunities.length);
-            setWindowStart(0);
-          }  
+          // Assuming result.data is an array of ArbitrageOpportunity objects:
+          setData((prevData) => [...prevData, ...opportunities].slice(-10));
         } else {
           console.error("API Error:", result.message);
         }
       } catch (error) {
-        console.error("Error fetching historical data:", error);
+        console.error("Error fetching live data:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    const fetchHistoricalData2 = async () => {
+    
+    // Function to simulate fetching historical data
+    const fetchHistoricalData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:5002/history/${currency2+'USDT'}`, {
+        const response = await fetch(`http://localhost:5002/history/${currency1+'/'+currency2}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -85,7 +89,7 @@ interface LiveDataGraphProps {
         const opportunities: ArbitrageOpportunity[] = transformHistoryData(result);
 
         if (result.status === "success") {
-          setData2(opportunities);
+          setData(opportunities);
           if (opportunities.length > 0 && windowLength === 0) {
             // Default preset (e.g., 'all' time points)
             setWindowLength(opportunities.length);
@@ -113,70 +117,33 @@ interface LiveDataGraphProps {
       });
     };
 
-  // Merge data1 and data2 by matching timestamps. Then compute ratio = price1 / price2.
-  function mergeAndComputeRatio(
-    arr1: ArbitrageOpportunity[],
-    arr2: ArbitrageOpportunity[]
-  ): ArbitrageOpportunity[] {
-    // Build a map of timestamps -> price for each array.
-    const map1 = new Map<number, ArbitrageOpportunity>();
-    arr1.forEach((d) => {
-      map1.set(d.timestamp, d);
-    });
-
-    const merged: ArbitrageOpportunity[] = [];
-
-    // For each data2 point, see if there's a matching timestamp in map1.
-    arr2.forEach((d2) => {
-      const match = map1.get(d2.timestamp);
-      if (match) {
-        // ratio
-        const ratio = d2.price !== 0 ? match.price / d2.price : 0;
-        merged.push({
-          feed: match.feed + '/' + d2.feed, // e.g. "BTC/ETH"
-          timestamp: match.timestamp,       // or d2.timestamp, they match
-          price: ratio,
-          liquidity1: 0,
-          liquidity2: 0,
-        });
-      }
-    });
-
-    // Sort by timestamp, just in case
-    merged.sort((a, b) => a.timestamp - b.timestamp);
-    return merged;
-  }
-
-  const computeCombinedData = () => {
-    const combined = mergeAndComputeRatio(data1, data2);
-    setCombinedData(combined);
-  };
+    function transformLiveData(rawData: any): ArbitrageOpportunity[] {
+      return rawData.feeds.map((item: any) => ({
+        feed: item.feed_id, // use feed_id from the raw JSON
+        timestamp: new Date(item.timestamp).getTime() / 1000, // convert to Unix timestamp (seconds)
+        price: item.price,
+        liquidity1: 0, // default value
+        liquidity2: 0, // default value
+      }));
+    }
 
     // Fetch live data immediately and then every 3 seconds
   useEffect(() => {
     if (isHistorical) {
-      const timeout1 = setTimeout(() => {
-        fetchHistoricalData1();
-      }, 1000);
-      const timeout2 = setTimeout(() => {
-        fetchHistoricalData2();
-      }, 1000);
+      const timeout = setTimeout(() => {
+        fetchHistoricalData();
+      }, 500);
 
-      console.log(data1);
-      console.log(data2);
-      computeCombinedData();
-      
-      return () => {
-        clearTimeout(timeout1);
-        clearTimeout(timeout2);
-      };
-
+      return () => clearTimeout(timeout);
     } else {
+      fetchLiveData();
+      const interval = setInterval(fetchLiveData, 5000);
+      return () => clearInterval(interval);
     }
   }, [isHistorical]);
 
     // In historical mode, show only the last sliderValue entries.
-    const displayedData = isHistorical ? combinedData.slice(windowStart, windowStart + windowLength) : combinedData;
+    const displayedData = isHistorical ? data.slice(windowStart, windowStart + windowLength) : data;
 
     // Preset button handler: sets the fixed windowLength (number of data points)
     const setPreset = (preset: '1h' | '1d' | '1m' | '6m' | 'all') => {
@@ -196,13 +163,13 @@ interface LiveDataGraphProps {
         length = 13;
         break;
       case 'all':
-        length = combinedData.length;
+        length = data.length;
         break;
       default:
-        length = combinedData.length;
+        length = data.length;
     }
     setWindowLength(length);
-    setWindowStart(combinedData.length - length > 0 ? combinedData.length - length : 0);
+    setWindowStart(data.length - length > 0 ? data.length - length : 0);
   };
   
     return (
@@ -213,7 +180,19 @@ interface LiveDataGraphProps {
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={displayedData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" />
+            <XAxis dataKey="timestamp"   
+            domain={['auto', 'auto']}
+            tickFormatter={(val) => {
+              // `val` is a Unix timestamp in seconds
+              const date = new Date(val * 1000);
+              // Show hours, minutes, and seconds in 24-hour format
+              return date.toLocaleTimeString([], {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              });
+            }}/>
             <YAxis />
             <Tooltip />
             <Line type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 2 }} dot={{ r: 0.5 }} />
@@ -232,7 +211,7 @@ interface LiveDataGraphProps {
               id="slider"
               type="range"
               min="1"
-              max={combinedData.length - windowLength >= 0 ? combinedData.length - windowLength : 0}
+              max={data.length - windowLength >= 0 ? data.length - windowLength : 0}
               value={windowStart}
               onChange={(e) => setWindowStart(Number(e.target.value))}
               style={{ width: '100%' }}
@@ -251,4 +230,4 @@ interface LiveDataGraphProps {
     );
   };
   
-  export default CombinedDataGraph;
+  export default LiveDataGraph;
