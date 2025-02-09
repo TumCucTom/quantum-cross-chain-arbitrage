@@ -15,15 +15,8 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 
-# -----------------------------
-# 🔹 Configure Logging (Docker Captures Logs)
-# -----------------------------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
-
-# -----------------------------
-# 🔹 Database Configuration
-# -----------------------------
 
 # Database connection
 db_config = {
@@ -48,9 +41,7 @@ def get_db_connection():
 
 conn = get_db_connection()
 
-# -----------------------------
-# ✅ Ensure Database Table Exists
-# -----------------------------
+
 def create_table():
     """Creates a table for storing live market data if it does not already exist."""
     cur = conn.cursor()
@@ -66,7 +57,7 @@ def create_table():
     """)
     conn.commit()
     cur.close()
-    logger.info("✅ Database table `market_data` checked/created.")
+    logger.info("Database table `market_data` checked/created.")
 
 create_table()  # Ensure table is created on startup
 
@@ -90,13 +81,10 @@ def import_csv_to_db():
 
     conn.commit()
     cur.close()
-    logger.info("✅ CSV data successfully imported into MySQL.")
+    logger.info("CSV data successfully imported into MySQL.")
 
 #import_csv_to_db()  # Import CSV data on startup
 
-# -----------------------------
-# 🔹 Flask API Endpoints
-# -----------------------------
 
 @app.route("/ftso-live-prices", methods=["POST"])
 def fetch_ftso_live_prices():
@@ -137,16 +125,16 @@ def get_historical_data():
         try:
             historical_data = cur.fetchall()
             cur.close()
-            logger.info(f"✅ Retrieved {len(historical_data)} historical records.")
+            logger.info(f"Retrieved {len(historical_data)} historical records.")
             logger.info(jsonify({"status": "success", "historical_data": historical_data}))
             return jsonify({"status": "success", "historical_data": historical_data})
         except Exception as e:
             cur.close()
-            logger.error(f"❌ No historical data found.")
+            logger.error(f"No historical data found.")
             return jsonify({"status": "error", "message": "No historical data found."})
 
     except Exception as e:
-        logger.error(f"❌ Error fetching historical data: {str(e)}")
+        logger.error(f"Error fetching historical data: {str(e)}")
         return jsonify({"status": "error", "message": str(e)})
 
 @app.route("/qaoa-arbitrage")
@@ -184,13 +172,13 @@ def get_full_history(symbol):
         if not history_data:
             return jsonify({"status": "error", "message": f"No historical data found for {symbol}"}), 404
 
-        logger.info(f"✅ Retrieved {len(history_data)} historical records for {symbol}.")
+        logger.info(f"Retrieved {len(history_data)} historical records for {symbol}.")
         return jsonify({"status": "success", "symbol": symbol, "history": history_data})
 
     except Exception as e:
-        logger.error(f"❌ Error fetching history for {symbol}: {str(e)}")
+        logger.error(f"Error fetching history for {symbol}: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
-    
+
 @app.route("/history/<symbol1>/<symbol2>")
 def get_dual_history(symbol1, symbol2):
     """
@@ -224,7 +212,7 @@ def get_dual_history(symbol1, symbol2):
                 "message": f"No historical data found for {symbol1} or {symbol2}"
             }), 404
 
-        logger.info(f"✅ Retrieved {len(history_data)} total records for {symbol1} and {symbol2}.")
+        logger.info(f"Retrieved {len(history_data)} total records for {symbol1} and {symbol2}.")
 
         return jsonify({
             "status": "success",
@@ -233,7 +221,7 @@ def get_dual_history(symbol1, symbol2):
         })
 
     except Exception as e:
-        logger.error(f"❌ Error fetching history for {symbol1} and {symbol2}: {str(e)}")
+        logger.error(f"Error fetching history for {symbol1} and {symbol2}: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
