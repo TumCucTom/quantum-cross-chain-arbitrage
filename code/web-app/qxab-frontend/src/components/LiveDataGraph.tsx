@@ -179,7 +179,19 @@ interface LiveDataGraphProps {
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={displayedData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" />
+            <XAxis dataKey="timestamp"   
+            domain={['auto', 'auto']}
+            tickFormatter={(val) => {
+              // `val` is a Unix timestamp in seconds
+              const date = new Date(val * 1000);
+              // Show hours, minutes, and seconds in 24-hour format
+              return date.toLocaleTimeString([], {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              });
+            }}/>
             <YAxis />
             <Tooltip />
             <Line type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 2 }} dot={{ r: 0.5 }} />

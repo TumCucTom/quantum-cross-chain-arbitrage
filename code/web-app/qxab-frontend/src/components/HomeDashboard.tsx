@@ -95,7 +95,7 @@ const HomeDashboard: React.FC = () => {
         {/* Graphs - Only Display 6 Selected Graphs */}
         <Grid container spacing={2} sx={{ width: '100%', justifyContent: 'center' }}>
           {selectedCurrencies.map((currency, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
+            <Grid item xs={12} key={index}>
               <Paper sx={{ p: 2, textAlign: 'center', minHeight: 250, position: 'relative', minWidth: '300px' }}>
                 {/* Fullscreen Button (Top Right) */}
                 <IconButton

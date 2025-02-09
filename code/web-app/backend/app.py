@@ -176,11 +176,17 @@ def get_historical_data():
             ORDER BY timestamp DESC
         """)
 
-        historical_data = cur.fetchall()
-        cur.close()
-        logger.info(f"✅ Retrieved {len(historical_data)} historical records.")
-        logger.info(jsonify({"status": "success", "historical_data": historical_data}))
-        return jsonify({"status": "success", "historical_data": historical_data})
+
+        try:
+            historical_data = cur.fetchall()
+            cur.close()
+            logger.info(f"✅ Retrieved {len(historical_data)} historical records.")
+            logger.info(jsonify({"status": "success", "historical_data": historical_data}))
+            return jsonify({"status": "success", "historical_data": historical_data})
+        except Exception as e:
+            cur.close()
+            logger.error(f"❌ No historical data found.")
+            return jsonify({"status": "error", "message": "No historical data found."})
 
     except Exception as e:
         logger.error(f"❌ Error fetching historical data: {str(e)}")
@@ -193,6 +199,10 @@ def get_full_history(symbol):
     Returns all recorded prices and timestamps.
     """
     try:
+        # If symbol doesn't already end with 'USDT', append it.
+        if not symbol.upper().endswith("USDT"):
+            symbol += "USDT"
+
         logger.info(f"Fetching historical data for {symbol}...")
         cur = conn.cursor(pymysql.cursors.DictCursor)
 
@@ -215,6 +225,53 @@ def get_full_history(symbol):
     except Exception as e:
         logger.error(f"❌ Error fetching history for {symbol}: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+@app.route("/history/<symbol1>/<symbol2>")
+def get_dual_history(symbol1, symbol2):
+    """
+    Fetches the full historical price data for two trading pairs in a single query.
+    Returns all recorded prices and timestamps for both symbols.
+    """
+    try:
+        # Normalize both symbols to end with 'USDT'
+        if not symbol1.upper().endswith("USDT"):
+            symbol1 += "USDT"
+        if not symbol2.upper().endswith("USDT"):
+            symbol2 += "USDT"
+
+        logger.info(f"Fetching historical data for {symbol1} and {symbol2}...")
+        cur = conn.cursor(pymysql.cursors.DictCursor)
+
+        # Use WHERE symbol IN (%s, %s) to get data for both symbols in one query
+        cur.execute("""
+            SELECT symbol, price, uniswap_liquidity, curve_liquidity, timestamp
+            FROM market_data
+            WHERE symbol IN (%s, %s)
+            ORDER BY timestamp ASC
+        """, (symbol1, symbol2))
+
+        history_data = cur.fetchall()
+        cur.close()
+
+        if not history_data:
+            return jsonify({
+                "status": "error",
+                "message": f"No historical data found for {symbol1} or {symbol2}"
+            }), 404
+
+        logger.info(f"✅ Retrieved {len(history_data)} total records for {symbol1} and {symbol2}.")
+
+        return jsonify({
+            "status": "success",
+            "symbols": [symbol1, symbol2],
+            "history": history_data
+        })
+
+    except Exception as e:
+        logger.error(f"❌ Error fetching history for {symbol1} and {symbol2}: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 
 
 if __name__ == "__main__":
