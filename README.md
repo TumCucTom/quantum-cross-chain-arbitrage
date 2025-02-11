@@ -10,18 +10,18 @@ Built by [Tom](https://www.linkedin.com/in/thomas-bale-5863542a4/), [Dhillon](ht
 ## Overview  
 **Quantum-Enhanced Cross-Chain Arbitrage Bot (QXAB)** is an innovative arbitrage system that leverages **Quantum Optimization (QAOA)** and **Flare’s blockchain protocols** to execute high-speed, secure, and profitable arbitrage trades across multiple decentralized finance (DeFi) ecosystems with **Vyper** contracts.  
 
+---
+
+## Architecture Diagram
+
+![](images/arch.png)
+
 ### Key Features  
 - **Quantum Speed Boost** – Uses Quantum Approximate Optimization Algorithm (QAOA) for rapid arbitrage path discovery.  
 - **Flare’s FTSO (Time Series Oracle) Integration** – Fetches **real-time cross-chain price feeds** securely.  
 - **Flare’s State Connector** – Ensures **trustless execution** of cross-chain swaps.  
 - **Cross-Chain Flash Loans** – Utilizes **Aave, Uniswap, Curve, and Flare lending pools**.  
 - **Risk-Free Arbitrage** – Trades execute only when **guaranteed profit** is detected.  
-
----
-
-## Architecture Diagram
-
-![](images/arch.png)
 
 ---
 
@@ -63,10 +63,4 @@ npm run dev
 ## Next Steps  
 - Improve **QAOA model** for better arbitrage pathfinding.  
 - Expand support for **more DeFi lending protocols**.  
-- Deploy on **Ethereum Mainnet, BSC, Solana, and Flare**.  
-
-Want to contribute? Fork the repo and submit a PR!  
-
----
-
-Let me know if you need further modifications.
+- Deploy on **Ethereum Mainnet, BSC, Solana, and Flare**.   
