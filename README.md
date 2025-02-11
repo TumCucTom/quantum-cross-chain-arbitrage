@@ -1,4 +1,5 @@
 # 🏆Winners - ETH Oxford DeFi hackathon prize ($5000)🏆
+# 🥈Vyperlang bounty - 2nd place🥈
 
 ---------------------
 
